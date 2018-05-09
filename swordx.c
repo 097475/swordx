@@ -4,13 +4,14 @@
 #include <unistd.h>
 #include <getopt.h>
 #include "swordx.h"
+#define ALPH 26
 
 void printall(Trie *t)
 {
 	if(t!=NULL)
 	{
 		printf("value: %s\toccurrences: %d\n",t->value,t->occurrencies);
-		for(int i = 0; i<26; i++)
+		for(int i = 0; i<ALPH; i++)
 		{
 			printall(t->children[i]);		
 		}
@@ -26,13 +27,14 @@ Trie *n = (Trie*)malloc(sizeof(Trie));
         if(t->children[str[level-1]-'a'] == NULL)
         {           
             n->value = (char*)malloc(level+1);
-            strncpy(n->value,str,level);  //bad function
+            //strncpy(n->value,str,level);  //bad function
+            snprintf(n->value,level+1,"%s",str); //space for null character
            // n->value=str;
-            n->value[level] = '\0';
+           // n->value[level] = '\0';
             //printf("%s %d\n",n->value,level);
             
             
-            for(int j = 0; j<26; j++)
+            for(int j = 0; j<ALPH; j++)
 			{
 				n->children[j] = NULL;
 			}
@@ -88,6 +90,7 @@ FILE* open_file(char* path){
 	if(pf==NULL)
 	{
 		perror("");
+		exit(EXIT_FAILURE);
 	}
 	return pf;	
 }
@@ -99,11 +102,16 @@ char* getWord(FILE *pf)
 	int pos = 0;
 	while((c=getc(pf))!=' ' && c!='\n' && c!=EOF)
 	{
-		if(strchr(",;.:\n\r?!()[]{}\\/\"\'*+#@0123456789",c)==NULL)
+		if(c>='a' && c<='z' || c>='A'&&c<='Z')
 		{
 		//	printf("%c\n",c);
 			buf[pos] = c;
 			pos++;
+		}
+		if(pos==500)
+		{
+			fprintf(stderr,"Word is too long\n");
+			exit(EXIT_FAILURE);
 		}
 
 	}
@@ -113,8 +121,9 @@ char* getWord(FILE *pf)
 		return NULL;
 	}
 	char *word = (char*)malloc(pos*sizeof(char));
-	strncpy(word,buf,pos); //bad function
-	word[pos] = '\0';
+	snprintf(word,pos+1,"%s",buf); //space for null character
+	//strncpy(word,buf,pos); //bad function
+	//word[pos] = '\0';
 	//printf("%s\n",word);
 	
 	// clear word
@@ -128,6 +137,7 @@ FILE* makeFile()
 	if(pf == NULL)
 	{
 		perror("");
+		exit(EXIT_FAILURE);
 	}
 	
 	return pf;
