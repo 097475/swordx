@@ -28,10 +28,10 @@ Trie *n = (Trie*)malloc(sizeof(Trie));
         if(t->children[str[level-1]-'a'] == NULL)
         {           
             n->value = (char*)malloc(level+1);
-            //strncpy(n->value,str,level);  //bad function
-            snprintf(n->value,level+1,"%s",str); //space for null character
+            strncpy(n->value,str,level);  //bad function
+           // snprintf(n->value,level+1,"%s",str); //space for null character
            // n->value=str;
-           // n->value[level] = '\0';
+           	 n->value[level] = '\0';
             //printf("%s %d\n",n->value,level);
             
             
@@ -102,11 +102,14 @@ char* getWord(FILE *pf)
 	char c;
 	char buf[500];
 	int pos = 0;
+	while((c=getc(pf))==' ');
+	ungetc(c,pf);
 	while((c=getc(pf))!=' ' && c!='\n' && c!=EOF)
 	{
+		//printf("%c ",c);
 		if(isalpha(c))
 		{
-			printf("%c\n",c);
+			//printf("%c\n",c);
 			if(isupper(c))
 			{
 				c = tolower(c);
@@ -122,16 +125,17 @@ char* getWord(FILE *pf)
 
 	}
 	//printf("%d ",pos);
-	if(pos==0)
+	if(c==EOF)
 	{
 		return NULL;
 	}
+	//printf("buf: %s\n",buf);
 	char *word = (char*)malloc((pos+1)*sizeof(char));
-	int tes = snprintf(word,pos+1,"%s",buf); //space for null character
+	//int tes = snprintf(word,pos+1,"%s",buf); //space for null character
 	//word[pos]='\0';
-	//strncpy(word,buf,pos); //bad function
-	//word[pos] = '\0';
-	printf("%s snprintf:%d pos:%d\n",word,tes,pos);
+	strncpy(word,buf,pos); //bad function
+	word[pos] = '\0';
+	//printf("%s %s pos:%d\n",buf,word,pos);
 	
 	// clear word
 	
