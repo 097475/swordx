@@ -87,6 +87,7 @@ if(flag==0)
 
 FILE* open_file(char* path){
 	FILE* pf = fopen(path,"rb");
+
 	if(pf==NULL)
 	{
 		perror("");
@@ -189,7 +190,7 @@ Trie* createTree()
 
 void execute(char *src)
 {
-	FILE *pfread = open_file("test.txt");
+	FILE *pfread = open_file(src);
 	Trie *t = createTree();
 	char *str;
 	while((str=getWord(pfread))!=NULL)
