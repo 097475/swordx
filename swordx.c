@@ -3,15 +3,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <ctype.h>
 #include "swordx.h"
-#define ALPH 26
+
 
 void printall(Trie *t)
 {
 	if(t!=NULL)
 	{
 		printf("value: %s\toccurrences: %d\n",t->value,t->occurrencies);
-		for(int i = 0; i<ALPH; i++)
+		for(int i = 0; i<26; i++)
 		{
 			printall(t->children[i]);		
 		}
@@ -34,7 +35,7 @@ Trie *n = (Trie*)malloc(sizeof(Trie));
             //printf("%s %d\n",n->value,level);
             
             
-            for(int j = 0; j<ALPH; j++)
+            for(int j = 0; j<26; j++)
 			{
 				n->children[j] = NULL;
 			}
@@ -103,9 +104,13 @@ char* getWord(FILE *pf)
 	int pos = 0;
 	while((c=getc(pf))!=' ' && c!='\n' && c!=EOF)
 	{
-		if(c>='a' && c<='z' || c>='A'&&c<='Z')
+		if(isalpha(c))
 		{
-		//	printf("%c\n",c);
+			printf("%c\n",c);
+			if(isupper(c))
+			{
+				c = tolower(c);
+			}
 			buf[pos] = c;
 			pos++;
 		}
@@ -121,11 +126,12 @@ char* getWord(FILE *pf)
 	{
 		return NULL;
 	}
-	char *word = (char*)malloc(pos*sizeof(char));
-	snprintf(word,pos+1,"%s",buf); //space for null character
+	char *word = (char*)malloc((pos+1)*sizeof(char));
+	int tes = snprintf(word,pos+1,"%s",buf); //space for null character
+	//word[pos]='\0';
 	//strncpy(word,buf,pos); //bad function
 	//word[pos] = '\0';
-	//printf("%s\n",word);
+	printf("%s snprintf:%d pos:%d\n",word,tes,pos);
 	
 	// clear word
 	
