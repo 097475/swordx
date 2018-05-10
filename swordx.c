@@ -102,13 +102,11 @@ char* getWord(FILE *pf)
 	char c;
 	char buf[500];
 	int pos = 0;
-	while((c=getc(pf))==' ');
+	while(!isalpha(c=getc(pf)) && c!=EOF);
 	ungetc(c,pf);
-	while((c=getc(pf))!=' ' && c!='\n' && c!=EOF)
+	while(isalpha(c=getc(pf)))
 	{
-		//printf("%c ",c);
-		if(isalpha(c))
-		{
+		//printf("%c ",
 			//printf("%c\n",c);
 			if(isupper(c))
 			{
@@ -116,7 +114,7 @@ char* getWord(FILE *pf)
 			}
 			buf[pos] = c;
 			pos++;
-		}
+	
 		if(pos==500)
 		{
 			fprintf(stderr,"Word is too long\n");
