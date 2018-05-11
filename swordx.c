@@ -39,7 +39,7 @@ char* getWord(FILE *pf, char *blacklist[], int blc) {
 	char *word = (char*)malloc(pos*sizeof(char));
 	strncpy(word,buf,pos);
 	word[pos]='\0';
-	
+	//printf("%s ",word);
 	if(!isInArray(blacklist,blc,word))
 		return word;
 	free(word);
@@ -60,7 +60,7 @@ void writeWord(Trie *t,FILE *pf) {
 	char *word = t->value;
 	fwrite(word,sizeof(char),strlen(word),pf);
 	fputs(": ",pf);
-	putc(t->occurrencies+'0',pf);
+	fprintf(pf,"%d",t->occurrencies);
 	fputs("\r\n",pf);
 }
 
@@ -86,8 +86,6 @@ void execute(char **files,int nfiles, char **blacklist, int blc, char **folders,
 		fclose(pfread);		
 	}
 
-		
-	
 	FILE *pfwrite = makeFile();
 	visitTree(t,pfwrite); // write trie status
 	fclose(pfwrite);
