@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <ctype.h>
 #include "trie.h"
+#include "swordx.h"
 
 static int cmpstringp ( const void* , const void* );
 int isInArray ( char** , long , char* );
@@ -34,7 +34,7 @@ char* getWord(FILE *pf, char *blacklist[], int blc) {
 	char *ret = NULL;
 	do {
 		if(ret != NULL) free(ret);
-		ret = getword(pf);
+		ret = _getWord(pf);
 	} while(ret != NULL && isInArray(blacklist,blc,ret));
 	return ret;
 }
