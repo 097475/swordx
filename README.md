@@ -5,5 +5,5 @@ TODO :
 - multiple file sources
 
 DONE :
-+ multiple command line argument parser (completed in v2)
++ multiple command line argument parser
 + stack overflow in getWord
