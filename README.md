@@ -6,4 +6,4 @@ TODO :
 
 DONE :
 + multiple command line argument parser (completed in v2)
-+ stack overglow in getWord
++ stack overflow in getWord
