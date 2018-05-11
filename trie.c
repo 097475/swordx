@@ -54,7 +54,7 @@ void addRecord(char* str, Trie *t, int level) {
 
 void printall(Trie *t) {
 	if(t != NULL) {
-		printf("value: %s\toccurrences: %d\n", t->value, t->occurrencies);
+		printf("value: %s\toccurrences: %lu\n", t->value, t->occurrencies);
 		for(int i = 0; i < 26; i++)
 			printall(t->children[i]);
 	}
