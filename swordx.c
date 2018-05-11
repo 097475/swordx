@@ -82,9 +82,7 @@ void execute(char **files,int nfiles, char **blacklist, int blc, char **folders,
 	for(int i=0;i<nfiles;i++) {
 		FILE *pfread = open_file(files[i]);	
 		while((str = getWord(pfread,blacklist,blc)) != NULL)
-		{
 			add(str,t); // add the word to the trie (starting from the 1st level)
-		}
 		fclose(pfread);		
 	}
 
