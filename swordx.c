@@ -9,16 +9,7 @@
 static int cmpstringp ( const void* , const void* );
 int isInArray ( char** , long , char* );
 
-FILE* open_file(char* path) {
-	FILE* pf = fopen(path,"rb");
-	if(pf == NULL) {
-		perror("Error reading");
-		exit(EXIT_FAILURE);
-	}
-	return pf;	
-}
-
-char* getWord(FILE *pf, char *blacklist[], int blc) {
+char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
 	int pos = 0; // index
 	
@@ -36,13 +27,26 @@ char* getWord(FILE *pf, char *blacklist[], int blc) {
 	char *word = (char*)malloc(pos*sizeof(char));
 	strncpy(word,buf,pos);
 	word[pos]='\0';
-	
-	if(!isInArray(blacklist,blc,word))
-		return word;
-	free(word);
-	return getWord(pf,blacklist,blc);
+	return word;
 }
 
+char* getWord(FILE *pf, char *blacklist[], int blc) {
+	char *ret = NULL;
+	do {
+		if(ret != NULL) free(ret);
+		ret = getword(pf);
+	} while(ret != NULL && isInArray(blacklist,blc,ret));
+	return ret;
+}
+
+FILE* open_file(char* path) {
+	FILE* pf = fopen(path,"rb");
+	if(pf == NULL) {
+		perror("Error reading");
+		exit(EXIT_FAILURE);
+	}
+	return pf;	
+}
 
 FILE* makeFile() {
 	FILE *pf = fopen("result.txt","wb");
@@ -69,43 +73,75 @@ void visitTree(Trie *t, FILE *pf) {
 		visitTree(t->children[i],pf); // check each children of the node
 }
 
-void execute(char *src, char *blacklist[], int blc) {
-	FILE *pfread = open_file(src);
+void execute(char **files,int nfiles, char **blacklist, int blc, char **folders, int nfolders) {
+	
 	Trie *t = createTree();
-	char *str;
 	if(blc > 1) qsort(blacklist, blc, sizeof(char*),cmpstringp);
-	while((str = getWord(pfread,blacklist,blc)) != NULL)
-		add(str,t); // add the word to the trie (starting from the 1st level)
+			
+	char *str;
+	for(int i=0;i<nfiles;i++) {
+		FILE *pfread = open_file(files[i]);	
+		while((str = getWord(pfread,blacklist,blc)) != NULL)
+		{
+			add(str,t); // add the word to the trie (starting from the 1st level)
+		}
+		fclose(pfread);		
+	}
+
 	FILE *pfwrite = makeFile();
 	visitTree(t,pfwrite); // write trie status
-	fclose(pfread);
 	fclose(pfwrite);
 }
 
 int main(int argc, char *argv[]) {
-	char *arr[] = {"one","two","three","four","five","six","seven"};	
-	char *src;
-	int option_index = 0;
-	int opt; // optaaantains the getopt_long return value (the index of long_options array
-    static struct option long_options[] = { // "--comand" , argument required? , X , opt result
-		{ "exclude",     required_argument, 0,  0 }
-    };
-
-	while ((opt = getopt_long(argc, argv, "f:",long_options,&option_index)) != -1) // read all the args, for each arg...
-		switch(opt) { // ... switch it
-			case 0:
-				//printf("Option %s\n\tArgs: %s\n", long_options[option_index].name,optarg);
-				printf("Blacklist\n\t%s\n", optarg);
-				//arr = stringToArray(optarg);
-				break;
-			case 'f':
-				printf("Reading from file(s)\t%s\n",optarg);
-				src = optarg;
-				break;
+	int opt = 0;
+	char **files = NULL,**folders = NULL,**blacklist = NULL;
+	int nfiles = 0,nwords = 0,nfolders = 0;
+	for(int i=1; i<argc; i++) {
+		if( (strcmp(argv[i],"-f")==0 && (opt=FILEARG)) || (strcmp(argv[i],"--remove")==0 && (opt=REMARG)) || (strcmp(argv[i],"-r")==0 && (opt=RECARG)) ) {
+			int j = i+1;
+			int farg_index = j;
+			int larg_index = j;
+			int nargs = 0;
+			char **args;
+			while(j<argc && (	strlen(argv[j])==1 || *argv[j]!='-'	)	)
+			{
+				larg_index++;
+				j++;
+			}
+			
+			if(farg_index==larg_index) { //no files! error!
+				fprintf(stderr,"No file(s) provided\n");
+				exit(EXIT_FAILURE);
+			}
+			else {				
+				int len = 0;
+				nargs = larg_index - farg_index;
+				args = (char**)malloc(nargs*sizeof(char*));
+				for ( int k = 0; k < nargs; k++ ) {
+					 len = strlen(argv[farg_index+k]);
+   					 args[k] = (char*) malloc((len+1)*sizeof(char));
+   					 strncpy(args[k],argv[farg_index+k],len);
+   					 args[k][len] = '\0';
+   					 
+				}
+			}
+			
+			switch(opt) {
+				case FILEARG: /*printf("file ");  */files = args;  nfiles = nargs; break;
+				case REMARG: /*printf("remove ");  */blacklist = args;  nwords = nargs; break;
+				case RECARG: /*printf("recurse ");  */folders = args;  nfolders = nargs; break;
+			}
+			i = j-1;
+			
 		}
-	
-	execute(src,arr,sizeof(arr)/sizeof(*arr)); // optarg contains the filename
-	//execute(optarg,NULL,0);
+		else {
+			fprintf(stderr,"Unknown argument\n");
+			exit(EXIT_FAILURE);
+		}
+
+	}
+	execute(files,nfiles,blacklist,nwords,folders,nfolders);
 }
 
 int isInArray(char *array[], long length, char *str) {
