@@ -1,6 +1,6 @@
 typedef struct Trie {
 	char *value;
-	int occurrencies;
+	long occurrencies;
 	struct Trie *children[26];
 } Trie;
 
