@@ -7,6 +7,14 @@
 #include "swordx.h"
 
 
+void debug_printer(char** s, int len)
+{
+	for(int i=0; i<len; i++)
+	{
+		printf("%s ",s[i]);
+	}
+}
+
 void printall(Trie *t)
 {
 	if(t!=NULL)
@@ -214,28 +222,65 @@ void execute(char *src)
 
 int main(int argc, char *argv[])
 {
-	int option_index = 0;
-	int opt;
-    static struct option long_options[] = {
-    {"add",     optional_argument, 0,  0 },
-    {"append",  no_argument, 0,  0 },
-    {"delete",  no_argument, 0,  0 },
-    {"verbose", no_argument, 0,  0 },
-    {"create",  no_argument, 0,  0 },
-    {"file",    no_argument, 0,  0 },
-    };
-		
- while ((opt = getopt_long(argc, argv, "f:",long_options,&option_index)) != -1)
- {
- 	switch(opt)
- 	{
- 		case 0:  printf("option %s", long_options[option_index].name); break;
- 		case 'f':
-            printf("from file(s)  %s\n",optarg);
-            execute(optarg);
-            break;
-	}
- }
+	int opt = 0;
+	char **files,**folders,**blacklist;
+	int nfiles = 0,nwords = 0,nfolders = 0;
+	for(int i=1; i<argc; i++)
+	{
+		if( (strcmp(argv[i],"-f")==0 && (opt=1)) || (strcmp(argv[i],"--remove")==0 && (opt=2)) || (strcmp(argv[i],"-r")==0 && (opt=3)) )
+		{
+			int j = i+1;
+			int farg_index = j;
+			int larg_index = j;
+			int nargs = 0;
+			char **args;
+			while(j<argc && (	strlen(argv[j])==1 || *argv[j]!='-'	)	)
+			{
+				larg_index++;
+				j++;
+			}
+			
+			if(farg_index==larg_index) //no files! error!
+			{
+				fprintf(stderr,"No file(s) provided\n");
+				exit(EXIT_FAILURE);
+			}
+			else
+			{				
+				int len = 0;
+				nargs = larg_index - farg_index;
+				args = (char**)malloc(nargs*sizeof(char*));
+				for ( int k = 0; k < nargs; k++ )
+				{
+					 len = strlen(argv[farg_index+k]);
+   					 args[k] = (char*) malloc((len+1)*sizeof(char));
+   					 strncpy(args[k],argv[farg_index+k],len);
+   					 args[k][len] = '\0';
+   					 
+				}
+			}
+			
+			switch(opt)
+			{
+				case 1: printf("file ");  files = args;  nfiles = nargs; break;
+				case 2: printf("remove ");  blacklist = args;  nwords = nargs; break;
+				case 3: printf("recurse ");  folders = args;  nfolders = nargs; break;
+			}
+			
+			/*debug_printer(files,nfiles);
+			debug_printer(blacklist,nwords);
+			debug_printer(folders,nfolders);*/
+			
+			i = j-1;
+			
+		}
+		else
+		{
+			fprintf(stderr,"Unknown argument\n");
+			exit(EXIT_FAILURE);
+		}
+
+	}	
 
 /*char* str = "test";
 add(str,t,1);
@@ -243,9 +288,6 @@ add("tent",t,1);
 add("test",t,1);
 add("sternocleidomastoideo",t,1);
 add("concupiscenza",t,1);*/
-
-
-
 
 //printall(t);
 
