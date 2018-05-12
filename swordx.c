@@ -96,14 +96,13 @@ int main(int argc, char *argv[]) {
 	char **files = NULL,**folders = NULL,**blacklist = NULL;
 	int nfiles = 0,nwords = 0,nfolders = 0;
 	for(int i=1; i<argc; i++) {
-		if( (strcmp(argv[i],"-f")==0 && (opt=FILEARG)) || (strcmp(argv[i],"--remove")==0 && (opt=REMARG)) || (strcmp(argv[i],"-r")==0 && (opt=RECARG)) ) {
+		if( (strcmp(argv[i],"-f")==0 && (opt=FILEARG)) || (strcmp(argv[i],"--remove")==0 && (opt=REMARG)) || (strcmp(argv[i],"-r")==0 && (opt=RECARG))) {
 			int j = i+1;
 			int farg_index = j;
 			int larg_index = j;
 			int nargs = 0;
 			char **args;
-			while(j<argc && (	strlen(argv[j])==1 || *argv[j]!='-'	)	)
-			{
+			while(j < argc && (strlen(argv[j]) == 1 || *argv[j] != '-')) {
 				larg_index++;
 				j++;
 			}
@@ -126,20 +125,26 @@ int main(int argc, char *argv[]) {
 			}
 			
 			switch(opt) {
-				case FILEARG: /*printf("file ");  */files = args;  nfiles = nargs; break;
-				case REMARG: /*printf("remove ");  */blacklist = args;  nwords = nargs; break;
-				case RECARG: /*printf("recurse ");  */folders = args;  nfolders = nargs; break;
+				case FILEARG:	files = args;  nfiles = nargs; break;
+				case REMARG:	blacklist = args;  nwords = nargs; break;
+				case RECARG:	folders = args;  nfolders = nargs; break;
 			}
 			i = j-1;
 			
 		}
+		else if((strcmp(argv[i],"-h")==0 && (opt=HELPARG)) ) {
+			printf("Usage: ./swordx [-r] [--remove {blacklist}] -f {files}\n\t-r: recoursive mode\n\t--remove {blacklist}: filter words adding a blacklist\n\t\t(elements must be separated by spaces)\n");
+			exit(EXIT_SUCCESS);
+		}
 		else {
-			fprintf(stderr,"Unknown argument\n");
+			fprintf(stderr,"Unknown argument %s\nUse -h to help\n",argv[i]);
 			exit(EXIT_FAILURE);
 		}
 
 	}
 	execute(files,nfiles,blacklist,nwords,folders,nfolders);
+	printf("%d",EOF);
+	exit(EXIT_SUCCESS);
 }
 
 int isInArray(char *array[], long length, char *str) {
