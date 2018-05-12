@@ -143,7 +143,6 @@ int main(int argc, char *argv[]) {
 
 	}
 	execute(files,nfiles,blacklist,nwords,folders,nfolders);
-	printf("%d",EOF);
 	exit(EXIT_SUCCESS);
 }
 
