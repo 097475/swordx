@@ -33,8 +33,10 @@ void _add (char* str, Trie *t, int level) {
 void addRecord(char* str, Trie *t, int level) {
 	Trie *n = (Trie*)malloc(sizeof(Trie));
 	if(t->children[str[level - 1] - 'a'] == NULL) {
-		n->value = (char*)malloc(level + 1);
-		snprintf(n->value, level + 1, "%s", str); //space for null character
+		n->value = (char*)malloc((level + 1)*sizeof(char));
+		//snprintf(n->value, level + 1, "%s", str); //space for null character
+		strncpy(n->value,str,level);
+		n->value[level]='\0';
 		
         for(int j = 0; j < 26; j++)
 			n->children[j] = NULL;
