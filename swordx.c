@@ -120,7 +120,6 @@ int main(int argc, char *argv[]) {
    					 args[k] = (char*) malloc((len+1)*sizeof(char));
    					 strncpy(args[k],argv[farg_index+k],len);
    					 args[k][len] = '\0';
-   					 
 				}
 			}
 			
