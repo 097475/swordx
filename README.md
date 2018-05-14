@@ -2,4 +2,8 @@
 TODO :
 - parallel file parsing
 - recursive folder parsing
-- filter invalid blacklist params
+- multiple file sources (already done!)
+
+DONE :
++ multiple command line argument parser
++ stack overflow in getWord
