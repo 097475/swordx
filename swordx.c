@@ -24,7 +24,7 @@ char* _getWord(FILE *pf) {
 		}
 	}
 	if(c == EOF) return NULL;
-	char *word = (char*)malloc(pos*sizeof(char));
+	char *word = (char*)malloc((pos+1)*sizeof(char));
 	strncpy(word,buf,pos);
 	word[pos]='\0';
 	return word;
