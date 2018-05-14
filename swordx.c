@@ -58,11 +58,7 @@ FILE* makeFile() {
 }
 
 void writeWord(Trie *t,FILE *pf) {
-	char *word = t->value;
-	fwrite(word,sizeof(char),strlen(word),pf);
-	fputs(": ",pf);
-	putc(t->occurrencies+'0',pf);
-	fputs("\r\n",pf);
+	fprintf(pf,"%s: %d\r\n",t->value,t->occurrencies);
 }
 
 void visitTree(Trie *t, FILE *pf) {
