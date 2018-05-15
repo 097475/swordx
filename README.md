@@ -2,7 +2,7 @@
 TODO :
 - stack esplicito per cartelle
 	- visita iterativa
-- rewrite help (jack)
+- rewrite help (jack) (DONE)
 - rewrite argument interpreter [097475]
 - rewrite output file location and name, custom name (jack)
 - allow maiusc letters and accents [097475]
