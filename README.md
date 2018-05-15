@@ -14,4 +14,4 @@ TODO :
 - sort by occurrencies [097475]
 - allow regular expressions (?)
 - parallel file parsing
-
+- rewrite makefile (jack)
