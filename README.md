@@ -1,5 +1,7 @@
 # swordx 
 TODO :
+- stack esplicito per cartelle
+	- visita iterativa
 - rewrite help (jack)
 - rewrite argument interpreter [097475]
 - rewrite output file location and name, custom name (jack)
