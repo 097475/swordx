@@ -58,7 +58,7 @@ FILE* makeFile() {
 }
 
 void writeWord(Trie *t,FILE *pf) {
-	fprintf(pf,"%s: %d\r\n",t->value,t->occurrencies);
+	fprintf(pf,"%s: %lu\r\n",t->value,t->occurrencies);
 }
 
 void visitTree(Trie *t, FILE *pf) {
@@ -85,6 +85,29 @@ void execute(char **files,int nfiles, char **blacklist, int blc, char **folders,
 	FILE *pfwrite = makeFile();
 	visitTree(t,pfwrite); // write trie status
 	fclose(pfwrite);
+}
+
+void writeHelp() {
+	printf("swordx [options] [inputs]\n");
+	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) and print them into an output file.\n");
+	printf("\n");
+	printf("   [inputs]\n");
+	printf("      the file and/or directory to process\n");
+	printf("   [options]\n");
+	printf("      -h | --help : display this message\n");
+	printf("\n");
+	printf("      --output <filename> : write the result in a spacific file (<filename>)\n");
+	printf("         by default the file is named \"sword.out\"\n");
+	printf("\n");
+	printf("      -r | --recursive : go through all the passed directories recursivly\n");
+	printf("      -f | --follow : follow links\n");
+	printf("      -e | --explude : exclude a file (if -r is enable)\n");
+	printf("\n");
+	printf("      -a | --alpha : consider alphabetics letters only\n");
+	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
+	printf("      -i <file> | --ignore <file> : all words contained in <file> are ignored (one per line)\n");
+	printf("\n");
+	printf("      --sordbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -128,7 +151,7 @@ int main(int argc, char *argv[]) {
 			
 		}
 		else if((strcmp(argv[i],"-h")==0 && (opt=HELPARG)) ) {
-			printf("Usage: ./swordx [-r] [--remove {blacklist}] -f {files}\n\t-r: recoursive mode\n\t--remove {blacklist}: filter words adding a blacklist\n\t\t(elements must be separated by spaces)\n");
+			writeHelp();
 			exit(EXIT_SUCCESS);
 		}
 		else {
