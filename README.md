@@ -2,7 +2,7 @@
 TODO :
 - rewrite argument interpreter [097475]
 - rewrite output file location and name, custom name
-- rewrite output file for alphabetic order [097475]
+- allow maiusc letters and accents [097475]
 - allow numbers in words
 - allow folder parsing and recursive folder parsing
 - allow link parsing (-follow)
