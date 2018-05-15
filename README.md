@@ -1,5 +1,6 @@
 # swordx 
 TODO :
+- rewrite help
 - rewrite argument interpreter [097475]
 - rewrite output file location and name, custom name
 - allow maiusc letters and accents [097475]
