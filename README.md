@@ -1,16 +1,16 @@
 # swordx 
 TODO :
-- rewrite argument interpreter
+- rewrite argument interpreter [097475]
 - rewrite output file location and name, custom name
-- rewrite output file for alphabetic order
+- rewrite output file for alphabetic order [097475]
 - allow numbers in words
 - allow folder parsing and recursive folder parsing
 - allow link parsing (-follow)
 - blacklist a file (-explude)
 - disallow numbers (-alpha)
-- min length (-min)
+- min length (-min) [097475]
 - rewrite blacklist to allow read from file
-- sort by occurrencies
+- sort by occurrencies [097475]
 - allow regular expressions
 - parallel file parsing
 
