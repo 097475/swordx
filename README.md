@@ -17,4 +17,3 @@ TODO :
 - allow regular expressions (?)
 - parallel file parsing
 - rewrite makefile (jack)
-test
