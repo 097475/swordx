@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "trie.h"
+#include <getopt.h>
 #include "swordx.h"
 
 static int cmpstringp ( const void* , const void* );
@@ -13,10 +13,10 @@ char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
 	int pos = 0; // index
 	
-	while(!isalpha(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
+	while(!isalnum(c = getc(pf)) && strchr("אטילעש",c)==NULL && c != EOF); // remove all not-alphabetic character before a string
 	ungetc(c,pf); // put the last char back
 
-	while(isalpha((c = getc(pf)))) {
+	while(isalnum(c = getc(pf)) || strchr("אטילעש",c)!=NULL) {
 		buf[ pos++ ] = tolower(c);
 		if(pos == 500) {
 			fprintf(stderr,"Word is too long\n");
@@ -61,15 +61,42 @@ void writeWord(Trie *t,FILE *pf) {
 	fprintf(pf,"%s: %lu\r\n",t->value,t->occurrencies);
 }
 
+void sbo(Trie *t, FILE *pf)
+{
+	BST **b = (BST**)malloc(sizeof(BST*));
+	sortTrie(t,b);
+	orderedPrint(*b,pf);
+}
+
+void sortTrie(Trie *t, BST **b){	
+	if(t == NULL) return;
+	if(t->occurrencies > 0) 
+	{
+		//printf("%s\n",t->value);
+		addBST(b,t); 
+	}
+
+	for(int i = 0; i < 42; i++)
+		sortTrie(t->children[i],b);	
+}
+
+void orderedPrint(BST *b, FILE *pf) {
+	if(b != NULL){
+		orderedPrint(b->left,pf);
+		writeWord(b->word,pf);
+		orderedPrint(b->right,pf);
+	}
+
+}
 void visitTree(Trie *t, FILE *pf) {
 	if(t == NULL) return;
 	if(t->occurrencies > 0) // if the word occurrs at least one time...
 		writeWord(t,pf); // ... write the word in the file
-	for(int i = 0; i < 26; i++)
+	for(int i = 0; i < CHARSET; i++)
 		visitTree(t->children[i],pf); // check each children of the node
 }
 
-void execute(char **files,int nfiles, char **blacklist, int blc, char **folders, int nfolders) {
+/*void execute(stack* s, char** args, unsigned char flags) {
 	
 	Trie *t = createTree();
 	if(blc > 1) qsort(blacklist, blc, sizeof(char*),cmpstringp);
@@ -85,7 +112,7 @@ void execute(char **files,int nfiles, char **blacklist, int blc, char **folders,
 	FILE *pfwrite = makeFile();
 	visitTree(t,pfwrite); // write trie status
 	fclose(pfwrite);
-}
+}*/
 
 void writeHelp() {
 	printf("swordx [options] [inputs]\n");
@@ -110,57 +137,88 @@ void writeHelp() {
 	printf("      --sordbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
 }
 
-int main(int argc, char *argv[]) {
-	int opt = 0;
-	char **files = NULL,**folders = NULL,**blacklist = NULL;
-	int nfiles = 0,nwords = 0,nfolders = 0;
-	for(int i=1; i<argc; i++) {
-		if( (strcmp(argv[i],"-f")==0 && (opt=FILEARG)) || (strcmp(argv[i],"--remove")==0 && (opt=REMARG)) || (strcmp(argv[i],"-r")==0 && (opt=RECARG))) {
-			int j = i+1;
-			int farg_index = j;
-			int larg_index = j;
-			int nargs = 0;
-			char **args;
-			while(j < argc && (strlen(argv[j]) == 1 || *argv[j] != '-')) {
-				larg_index++;
-				j++;
-			}
-			
-			if(farg_index==larg_index) { //no files! error!
-				fprintf(stderr,"No file(s) provided\n");
-				exit(EXIT_FAILURE);
-			}
-			else {				
-				int len = 0;
-				nargs = larg_index - farg_index;
-				args = (char**)malloc(nargs*sizeof(char*));
-				for ( int k = 0; k < nargs; k++ ) {
-					 len = strlen(argv[farg_index+k]);
-   					 args[k] = (char*) malloc((len+1)*sizeof(char));
-   					 strncpy(args[k],argv[farg_index+k],len);
-   					 args[k][len] = '\0';
-				}
-			}
-			
-			switch(opt) {
-				case FILEARG:	files = args;  nfiles = nargs; break;
-				case REMARG:	blacklist = args;  nwords = nargs; break;
-				case RECARG:	folders = args;  nfolders = nargs; break;
-			}
-			i = j-1;
-			
+int main(int argc, char *argv[]) {	
+	int opt = 0, nparams = 0;
+	char *explude = NULL,*ignore = NULL,*output = NULL, *min = NULL, **args, **params;
+	unsigned char flags = 0; //1 byte integer field
+	
+    struct option long_options[] = {
+		{"help",    no_argument, 0,  0 },
+		{"recursive",  no_argument, 0,  1},
+		{"follow",  no_argument, 0,  2 },
+		{"explude", required_argument, 0,  3 },
+		{"alpha",  no_argument, 0,  4 },
+		{"min",    required_argument, 0,  5 },
+		{"ignore",  required_argument, 0,  6 },
+		{"sortbyoccurrency",  no_argument, 0,  7 },
+		{"sbo",  no_argument, 0,  7 },
+		{"output",  required_argument, 0,  8 },
+		{ NULL, 0, NULL, 0 }  //required
+	};
+	
+	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:",long_options,NULL)) != -1)
+	{
+		switch(opt)
+		{
+			case 0:
+			case 'h': writeHelp(); break;
+			case 1:
+			case 'r': 
+					flags |= RECURSE_FLAG;
+					break;
+			case 2:
+			case 'f':					
+					flags |= FOLLOW_FLAG;
+					break;
+			case 3:
+			case 'e':
+					explude = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+					strcpy(explude,optarg);
+					break;
+			case 4:
+			case 'a': 					
+					flags |= ALPHA_FLAG;
+					break;
+			case 5:
+			case 'm': 
+					min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+					strcpy(min,optarg);
+					break;
+			case 6:
+			case 'i': 
+					ignore = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+					strcpy(ignore,optarg);
+					break;
+			case 7: 					
+					flags |= SBO_FLAG;
+					break;
+			case 8: 
+					output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+					strcpy(output,optarg);
+					break;
+			default: printf("default case");break;
 		}
-		else if((strcmp(argv[i],"-h")==0 && (opt=HELPARG)) ) {
-			writeHelp();
-			exit(EXIT_SUCCESS);
-		}
-		else {
-			fprintf(stderr,"Unknown argument %s\nUse -h to help\n",argv[i]);
-			exit(EXIT_FAILURE);
-		}
-
 	}
-	execute(files,nfiles,blacklist,nwords,folders,nfolders);
+	
+	args = (char**)malloc(4*sizeof(char*));
+	args[0] = explude;
+	args[1] = min;
+	args[2] = ignore;
+	args[3] = output;
+	
+	
+	nparams = argc-optind;
+	params = (char**)malloc(nparams*sizeof(char*));
+	for(int i = optind; i<argc; i++)
+	{
+		params[i] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
+		strcpy(params[i],argv[i]);
+		printf("%s ",params[i]);
+		Stack *s = (Stack *)malloc(sizeof(Stack));
+		//create stack with params and nparams
+	}
+
+	//execute(s,args,flags);
 	exit(EXIT_SUCCESS);
 }
 
