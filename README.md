@@ -1,19 +1,11 @@
 # swordx 
 TODO :
-- stack esplicito per cartelle (DONE)
-	- visita iterativa
-- rewrite help (jack) (DONE)
-- rewrite argument interpreter [097475] (DONE)
 - rewrite output file location and name, custom name (jack)
 - allow maiusc letters and accents [097475]
-- allow numbers in words (jack) (DONE)
 - allow folder parsing and recursive folder parsing
 - allow link parsing (-follow)
-- blacklist a file (-explude) (DONE)
 - disallow numbers (-alpha) (jack)
-- min length (-min) [097475] (DONE)
 - rewrite blacklist to allow read from file (jack)
-- sort by occurrencies [097475] (DONE)
 - allow regular expressions (?)
 - parallel file parsing
 - rewrite makefile (jack)
