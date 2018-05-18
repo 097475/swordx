@@ -14,29 +14,32 @@ char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
 	int pos = 0; // index
 	
-	while(!isalnum(c = getc(pf)) && strchr("אטילעש",c)==NULL && c != EOF); // remove all not-alphabetic character before a string
-	ungetc(c,pf); // put the last char back
+	while(!isalnum(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
+	if(c == EOF) return NULL;
+	else ungetc(c,pf); // put the last char back
 
-	while(isalnum(c = getc(pf)) || strchr("אטילעש",c)!=NULL) {
+
+	while(isalnum(c = getc(pf))) {
 		buf[ pos++ ] = tolower(c);
 		if(pos == 500) {
 			fprintf(stderr,"Word is too long\n");
 			exit(EXIT_FAILURE);
 		}
 	}
-	if(c == EOF) return NULL;
 	char *word = (char*)malloc((pos+1)*sizeof(char));
 	strncpy(word,buf,pos);
 	word[pos]='\0';
 	return word;
 }
 
-char* getWord(FILE *pf, char *blacklist[], int blc) {
+char* getWord(FILE *pf, int min, Trie *ignoreTrie) {
+
 	char *ret = NULL;
 	do {
 		if(ret != NULL) free(ret);
 		ret = _getWord(pf);
-	} while(ret != NULL && isInArray(blacklist,blc,ret));
+	} while(ret!=NULL && strlen(ret)<min);
+
 	return ret;
 }
 
@@ -61,6 +64,7 @@ FILE* makeFile() {
 void writeWord(Trie *t,FILE *pf) {
 	fprintf(pf,"%s: %lu\r\n",t->value,t->occurrencies);
 }
+
 
 void orderedPrint(BST *b, FILE *pf) {
 	if(b != NULL){
@@ -109,23 +113,43 @@ Stack *arrayToStack(char **par, int np) {
 
 void execute(Stack* s, char** args, unsigned char flags) {
 	char *explude = args[0];
-	char *min = args[1];
+	int min = (args[1] == NULL) ? 1 : atoi(args[1]);
 	char *ignore = args[2];
 	char *output = args[3];
+		
+	if(min<=0)
+	{
+		fprintf(stderr,"Error: Insert a valid value for --min | -m option. <num> must be > 0");
+		exit(EXIT_FAILURE);
+	} 
 	
+		
 	Trie *t = createTree();
-	if(blc > 1) qsort(blacklist, blc, sizeof(char*),cmpstringp);
-			
-	char *str;
-	for(int i=0;i<nfiles;i++) {
-		FILE *pfread = open_file(files[i]);	
-		while((str = getWord(pfread,blacklist,blc)) != NULL)
+	Trie *ignoreTrie = createTree();
+		
+	char *src,*str;
+	FILE *pfread;
+	while(!isStackEmpty(s))
+	{
+		src = pop(s);
+		if(ignore!=NULL && !strcmp(src,ignore)) continue;
+		pfread = open_file(src);
+		while((str = getWord(pfread,min,ignoreTrie)) != NULL)
 			add(str,t); // add the word to the trie (starting from the 1st level)
-		fclose(pfread);		
+		fclose(pfread);
+		free(src);	
 	}
-
 	FILE *pfwrite = makeFile();
-	visitTree(t,pfwrite); // write trie status
+	
+	if(flags & SBO_FLAG)
+	{
+		sbo(t,pfwrite);	
+	}
+	else
+	{
+		visitTree(t,pfwrite);
+	}
+		
 	fclose(pfwrite);
 }
 
@@ -209,7 +233,7 @@ int main(int argc, char *argv[]) {
 	//create stack with params and nparams
 	Stack *s = arrayToStack(params,nparams);
 	//~ visitStack(s);
-	//execute(s,args,flags);
+	execute(s,args,flags);
 	exit(EXIT_SUCCESS);
 }
 
