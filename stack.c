@@ -11,9 +11,9 @@ void push(Stack *s, char *str) {
 	// create a new stack piece
 	Stack *ns = (Stack *)malloc(sizeof(Stack));
 	// set the value
-	ns->value = (char *)malloc(sizeof(strlen(str)) + 1);
-	strncpy(ns->value, str, strlen(str));
-	ns->value[strlen(str) + 1] = '\0';
+	ns->value = (char *)malloc((strlen(str) + 1)*sizeof(char));
+	strcpy(ns->value, str);
+	//ns->value[strlen(str)] = '\0';
 	// next is null
 	ns->next = s->next;
 	s->next = ns;

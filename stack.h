@@ -7,3 +7,5 @@ int isStackEmpty ( Stack* );
 void push ( Stack * , char * );
 char *top ( Stack * );
 char *pop ( Stack * );
+
+void visitStack ( Stack * );

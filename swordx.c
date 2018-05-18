@@ -8,6 +8,7 @@
 
 static int cmpstringp ( const void* , const void* );
 int isInArray ( char** , long , char* );
+void writeHelp();
 
 char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
@@ -61,11 +62,13 @@ void writeWord(Trie *t,FILE *pf) {
 	fprintf(pf,"%s: %lu\r\n",t->value,t->occurrencies);
 }
 
-void sbo(Trie *t, FILE *pf)
-{
-	BST **b = (BST**)malloc(sizeof(BST*));
-	sortTrie(t,b);
-	orderedPrint(*b,pf);
+void orderedPrint(BST *b, FILE *pf) {
+	if(b != NULL){
+		orderedPrint(b->left,pf);
+		writeWord(b->word,pf);
+		orderedPrint(b->right,pf);
+	}
+
 }
 
 void sortTrie(Trie *t, BST **b){	
@@ -80,14 +83,13 @@ void sortTrie(Trie *t, BST **b){
 		sortTrie(t->children[i],b);	
 }
 
-void orderedPrint(BST *b, FILE *pf) {
-	if(b != NULL){
-		orderedPrint(b->left,pf);
-		writeWord(b->word,pf);
-		orderedPrint(b->right,pf);
-	}
-
+void sbo(Trie *t, FILE *pf)
+{
+	BST **b = (BST**)malloc(sizeof(BST*));
+	sortTrie(t,b);
+	orderedPrint(*b,pf);
 }
+
 void visitTree(Trie *t, FILE *pf) {
 	if(t == NULL) return;
 	if(t->occurrencies > 0) // if the word occurrs at least one time...
@@ -96,7 +98,20 @@ void visitTree(Trie *t, FILE *pf) {
 		visitTree(t->children[i],pf); // check each children of the node
 }
 
-/*void execute(stack* s, char** args, unsigned char flags) {
+Stack *arrayToStack(char **par, int np) {
+	Stack *s = (Stack *)malloc(sizeof(Stack));
+	s->value = NULL;
+	s->next = NULL;
+	for(int i = 0; i < np; i++)
+		push(s,par[i]);
+	return s;
+}
+
+void execute(Stack* s, char** args, unsigned char flags) {
+	char *explude = args[0];
+	char *min = args[1];
+	char *ignore = args[2];
+	char *output = args[3];
 	
 	Trie *t = createTree();
 	if(blc > 1) qsort(blacklist, blc, sizeof(char*),cmpstringp);
@@ -112,29 +127,6 @@ void visitTree(Trie *t, FILE *pf) {
 	FILE *pfwrite = makeFile();
 	visitTree(t,pfwrite); // write trie status
 	fclose(pfwrite);
-}*/
-
-void writeHelp() {
-	printf("swordx [options] [inputs]\n");
-	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) and print them into an output file.\n");
-	printf("\n");
-	printf("   [inputs]\n");
-	printf("      the file and/or directory to process\n");
-	printf("   [options]\n");
-	printf("      -h | --help : display this message\n");
-	printf("\n");
-	printf("      --output <filename> : write the result in a spacific file (<filename>)\n");
-	printf("         by default the file is named \"sword.out\"\n");
-	printf("\n");
-	printf("      -r | --recursive : go through all the passed directories recursivly\n");
-	printf("      -f | --follow : follow links\n");
-	printf("      -e | --explude : exclude a file (if -r is enable)\n");
-	printf("\n");
-	printf("      -a | --alpha : consider alphabetics letters only\n");
-	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
-	printf("      -i <file> | --ignore <file> : all words contained in <file> are ignored (one per line)\n");
-	printf("\n");
-	printf("      --sordbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
 }
 
 int main(int argc, char *argv[]) {	
@@ -209,15 +201,14 @@ int main(int argc, char *argv[]) {
 	
 	nparams = argc-optind;
 	params = (char**)malloc(nparams*sizeof(char*));
-	for(int i = optind; i<argc; i++)
+	for(int i = optind; i<argc; i++) // make params
 	{
-		params[i] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
-		strcpy(params[i],argv[i]);
-		printf("%s ",params[i]);
-		Stack *s = (Stack *)malloc(sizeof(Stack));
-		//create stack with params and nparams
+		params[i-optind] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
+		strcpy(params[i-optind],argv[i]);
 	}
-
+	//create stack with params and nparams
+	Stack *s = arrayToStack(params,nparams);
+	//~ visitStack(s);
 	//execute(s,args,flags);
 	exit(EXIT_SUCCESS);
 }
@@ -230,3 +221,29 @@ int isInArray(char *array[], long length, char *str) {
 static int cmpstringp(const void *p1, const void *p2) { // from "man qsort": the qsort method accepts void pointers only
 	return (strcmp(*(char **)p1, *(char **)p2));
 }
+
+
+
+void writeHelp() {
+	printf("swordx [options] [inputs]\n");
+	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) and print them into an output file.\n");
+	printf("\n");
+	printf("   [inputs]\n");
+	printf("      the file and/or directory to process\n");
+	printf("   [options]\n");
+	printf("      -h | --help : display this message\n");
+	printf("\n");
+	printf("      --output <filename> : write the result in a spacific file (<filename>)\n");
+	printf("         by default the file is named \"sword.out\"\n");
+	printf("\n");
+	printf("      -r | --recursive : go through all the passed directories recursivly\n");
+	printf("      -f | --follow : follow links\n");
+	printf("      -e | --explude : exclude a file (if -r is enable)\n");
+	printf("\n");
+	printf("      -a | --alpha : consider alphabetics letters only\n");
+	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
+	printf("      -i <file> | --ignore <file> : all words contained in <file> are ignored (one per line)\n");
+	printf("\n");
+	printf("      --sordbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
+}
+
