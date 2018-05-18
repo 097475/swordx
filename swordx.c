@@ -102,20 +102,23 @@ void visitTree(Trie *t, FILE *pf) {
 		visitTree(t->children[i],pf); // check each children of the node
 }
 
-Stack *arrayToStack(char **par, int np) {
+Stack *arrayToStack(char **par, int np, char *explude) {
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 	s->value = NULL;
 	s->next = NULL;
 	for(int i = 0; i < np; i++)
+	{
+		if(explude!=NULL && !strcmp(par[i],explude)) continue;
 		push(s,par[i]);
+	}
+		
 	return s;
 }
 
 void execute(Stack* s, char** args, unsigned char flags) {
-	char *explude = args[0];
-	int min = (args[1] == NULL) ? 1 : atoi(args[1]);
-	char *ignore = args[2];
-	char *output = args[3];
+	int min = (args[0] == NULL) ? 1 : atoi(args[0]);
+	char *ignore = args[1];
+	char *output = args[2];
 		
 	if(min<=0)
 	{
@@ -132,7 +135,6 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	while(!isStackEmpty(s))
 	{
 		src = pop(s);
-		if(ignore!=NULL && !strcmp(src,ignore)) continue;
 		pfread = open_file(src);
 		while((str = getWord(pfread,min,ignoreTrie)) != NULL)
 			add(str,t); // add the word to the trie (starting from the 1st level)
@@ -216,11 +218,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	args = (char**)malloc(4*sizeof(char*));
-	args[0] = explude;
-	args[1] = min;
-	args[2] = ignore;
-	args[3] = output;
+	args = (char**)malloc(3*sizeof(char*));
+	args[0] = min;
+	args[1] = ignore;
+	args[2] = output;
 	
 	
 	nparams = argc-optind;
@@ -231,7 +232,7 @@ int main(int argc, char *argv[]) {
 		strcpy(params[i-optind],argv[i]);
 	}
 	//create stack with params and nparams
-	Stack *s = arrayToStack(params,nparams);
+	Stack *s = arrayToStack(params,nparams,explude);
 	//~ visitStack(s);
 	execute(s,args,flags);
 	exit(EXIT_SUCCESS);
