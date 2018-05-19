@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <getopt.h>
 #include "swordx.h"
@@ -13,7 +15,7 @@ void writeHelp();
 char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
 	int pos = 0; // index
-	
+
 	while(!isalnum(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
 	if(c == EOF) return NULL;
 	else ungetc(c,pf); // put the last char back
@@ -49,7 +51,7 @@ FILE* open_file(char* path) {
 		perror("Error reading");
 		exit(EXIT_FAILURE);
 	}
-	return pf;	
+	return pf;
 }
 
 FILE* makeFile() {
@@ -75,16 +77,16 @@ void orderedPrint(BST *b, FILE *pf) {
 
 }
 
-void sortTrie(Trie *t, BST **b){	
+void sortTrie(Trie *t, BST **b){
 	if(t == NULL) return;
-	if(t->occurrencies > 0) 
+	if(t->occurrencies > 0)
 	{
 		//printf("%s\n",t->value);
-		addBST(b,t); 
+		addBST(b,t);
 	}
 
 	for(int i = 0; i < 42; i++)
-		sortTrie(t->children[i],b);	
+		sortTrie(t->children[i],b);
 }
 
 void sbo(Trie *t, FILE *pf)
@@ -106,12 +108,46 @@ Stack *arrayToStack(char **par, int np, char *explude) {
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 	s->value = NULL;
 	s->next = NULL;
+
+	struct stat filestats;
+
+
+
 	for(int i = 0; i < np; i++)
 	{
-		if(explude!=NULL && !strcmp(par[i],explude)) continue;
-		push(s,par[i]);
+		 if (lstat(par[i], &filestats) == -1)
+		 {
+        	perror("stat");
+        	exit(EXIT_FAILURE);
+   		 }
+		else
+		{
+			 printf("File type:                ");
+
+   			switch (filestats.st_mode & S_IFMT) {
+    		case S_IFDIR:  printf("directory\n");break;
+    		case S_IFLNK:   printf("symlink\n");
+                            char *buf = malloc((filestats.st_size+1)*sizeof(char));
+                            ssize_t len = readlink(par[i],buf,filestats.st_size);
+                            if(len!=-1)
+                            {
+                                buf[len] = '\0';
+                                push(s,buf);
+                            }
+                            else{
+                                perror("Invalid link");
+                                exit(EXIT_FAILURE);
+                            }
+                            break;
+    		case S_IFREG:  printf("regular file\n"); push(s,par[i]); free(par[i]); break;
+    		default:fprintf(stderr,"Unknown file type \"%s\"\n",par[i]); exit(EXIT_FAILURE);break;
+    		}
+		}
+
+		//if(explude!=NULL && !strcmp(par[i],explude)) continue; // to explude a file
 	}
-		
+    free(par);
+    free(explude);
 	return s;
 }
 
@@ -119,17 +155,17 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	int min = (args[0] == NULL) ? 1 : atoi(args[0]);
 	char *ignore = args[1];
 	char *output = args[2];
-		
+
 	if(min<=0)
 	{
 		fprintf(stderr,"Error: Insert a valid value for --min | -m option. <num> must be > 0");
 		exit(EXIT_FAILURE);
-	} 
-	
-		
+	}
+
+
 	Trie *t = createTree();
 	Trie *ignoreTrie = createTree();
-		
+
 	char *src,*str;
 	FILE *pfread;
 	while(!isStackEmpty(s))
@@ -139,27 +175,27 @@ void execute(Stack* s, char** args, unsigned char flags) {
 		while((str = getWord(pfread,min,ignoreTrie)) != NULL)
 			add(str,t); // add the word to the trie (starting from the 1st level)
 		fclose(pfread);
-		free(src);	
+		free(src);
 	}
 	FILE *pfwrite = makeFile();
-	
+
 	if(flags & SBO_FLAG)
 	{
-		sbo(t,pfwrite);	
+		sbo(t,pfwrite);
 	}
 	else
 	{
 		visitTree(t,pfwrite);
 	}
-		
+
 	fclose(pfwrite);
 }
 
-int main(int argc, char *argv[]) {	
+int main(int argc, char *argv[]) {
 	int opt = 0, nparams = 0;
 	char *explude = NULL,*ignore = NULL,*output = NULL, *min = NULL, **args, **params;
 	unsigned char flags = 0; //1 byte integer field
-	
+
     struct option long_options[] = {
 		{"help",    no_argument, 0,  0 },
 		{"recursive",  no_argument, 0,  1},
@@ -173,7 +209,7 @@ int main(int argc, char *argv[]) {
 		{"output",  required_argument, 0,  8 },
 		{ NULL, 0, NULL, 0 }  //required
 	};
-	
+
 	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:",long_options,NULL)) != -1)
 	{
 		switch(opt)
@@ -181,11 +217,11 @@ int main(int argc, char *argv[]) {
 			case 0:
 			case 'h': writeHelp(); break;
 			case 1:
-			case 'r': 
+			case 'r':
 					flags |= RECURSE_FLAG;
 					break;
 			case 2:
-			case 'f':					
+			case 'f':
 					flags |= FOLLOW_FLAG;
 					break;
 			case 3:
@@ -194,36 +230,36 @@ int main(int argc, char *argv[]) {
 					strcpy(explude,optarg);
 					break;
 			case 4:
-			case 'a': 					
+			case 'a':
 					flags |= ALPHA_FLAG;
 					break;
 			case 5:
-			case 'm': 
+			case 'm':
 					min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
 					strcpy(min,optarg);
 					break;
 			case 6:
-			case 'i': 
+			case 'i':
 					ignore = (char*)malloc((strlen(optarg)+1)*sizeof(char));
 					strcpy(ignore,optarg);
 					break;
-			case 7: 					
+			case 7:
 					flags |= SBO_FLAG;
 					break;
-			case 8: 
+			case 8:
 					output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
 					strcpy(output,optarg);
 					break;
 			default: printf("default case");break;
 		}
 	}
-	
+
 	args = (char**)malloc(3*sizeof(char*));
 	args[0] = min;
 	args[1] = ignore;
 	args[2] = output;
-	
-	
+
+
 	nparams = argc-optind;
 	params = (char**)malloc(nparams*sizeof(char*));
 	for(int i = optind; i<argc; i++) // make params

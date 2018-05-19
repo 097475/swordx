@@ -7,7 +7,7 @@ int isStackEmpty(Stack *s) {
 	return s->next == NULL;
 }
 
-void push(Stack *s, char *str) {	
+void push(Stack *s, char *str) {
 	// create a new stack piece
 	Stack *ns = (Stack *)malloc(sizeof(Stack));
 	// set the value
@@ -17,6 +17,7 @@ void push(Stack *s, char *str) {
 	// next is null
 	ns->next = s->next;
 	s->next = ns;
+	free(str);
 }
 
 char *top(Stack *s) {
