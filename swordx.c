@@ -139,12 +139,13 @@ Stack *arrayToStack(char **par, int np, char *explude) {
                                 exit(EXIT_FAILURE);
                             }
                             break;
-    		case S_IFREG:  printf("regular file\n"); push(s,par[i]); free(par[i]); break;
+    		case S_IFREG:  printf("regular file\n"); push(s,par[i]);  break;
     		default:fprintf(stderr,"Unknown file type \"%s\"\n",par[i]); exit(EXIT_FAILURE);break;
     		}
 		}
 
 		//if(explude!=NULL && !strcmp(par[i],explude)) continue; // to explude a file
+		free(par[i]);
 	}
     free(par);
     free(explude);
