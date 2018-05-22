@@ -50,13 +50,18 @@ char* _getWord(FILE *pf) {
 	return word;
 }
 
-char* getWord(FILE *pf, int min, Trie *ignoreTrie) {
+int _isalphanum(char * str) {
+	for(int i = 0; i < strlen(str); i++)
+		if(isdigit(str[i])) return 1;
+	return 0;
+}
 
+char* getWord(FILE *pf, int min, Trie *ignoreTrie, unsigned char flags) {
 	char *ret = NULL;
 	do {
 		if(ret != NULL) free(ret);
 		ret = _getWord(pf);
-	} while(ret!=NULL && (strlen(ret)<min || search(ret,ignoreTrie)));
+	} while(ret != NULL && (strlen(ret) < min || search(ret,ignoreTrie) || ((flags & ALPHA_FLAG) && _isalphanum(ret))));
 
 	return ret;
 }
@@ -246,7 +251,7 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	{
 		src = pop(s);
 		pfread = open_file(src);
-		while((str = getWord(pfread,min,ignoreTrie)) != NULL)
+		while((str = getWord(pfread,min,ignoreTrie, flags)) != NULL)
 			add(str,t); // add the word to the trie (starting from the 1st level)
 		fclose(pfread);
 		free(src);
