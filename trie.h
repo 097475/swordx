@@ -9,6 +9,7 @@ typedef struct Trie {
 void add ( char* , Trie* );
 void printall ( Trie* );
 Trie* createTree ( void );
+int search(char*,Trie*);
 
 
 typedef struct BST{

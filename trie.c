@@ -4,9 +4,36 @@
 #include <string.h>
 #include <ctype.h>
 #include "trie.h"
-
+//TODO: merge add and search
 void addRecord ( char* , Trie* , int );
 void _add ( char* , Trie* , int );
+int getIndex(char c);
+int _search(char *str, Trie *t, int level);
+
+int search(char *str, Trie *t){
+	
+	return _search(str,t,1);
+}
+
+
+int _search(char *str, Trie *t, int level)  //str is never null, trie is never null
+{
+		Trie *next = t->children[getIndex(str[level - 1])];
+		if(next!=NULL && strncmp(str,next->value,level) == 0)
+		{
+			if(level == strlen(str)) 
+				return 1;
+			else { 
+				level++;
+				_search(str,next,level);
+			}
+		}
+		else
+		{
+			return 0;
+		}
+}
+
 
 void add (char* str, Trie *t) {
 	_add(str,t,1);

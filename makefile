@@ -1,7 +1,7 @@
 all: swordx
-swordx: swordx.o trie.o stack.o
-	gcc -o swordx swordx.o trie.o stack.o
-swordx.o: swordx.c trie.c stack.c
-	gcc -c swordx.c trie.c stack.c
+swordx: swordx.o trie.o stack.o BST.o
+	gcc -o swordx swordx.o trie.o stack.o BST.o
+swordx.o: swordx.c trie.c stack.c BST.c
+	gcc -c swordx.c trie.c stack.c BST.c
 clean:
-	rm swordx swordx.o trie.o stack.o
+	rm swordx swordx.o trie.o stack.o BST.o
