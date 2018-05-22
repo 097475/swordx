@@ -4,3 +4,10 @@
 #define SBO_FLAG (1<<3) //00001000
 #include "trie.h"
 #include "stack.h"
+
+char* getWord ( FILE* , int , Trie* , unsigned char );
+FILE* open_file ( char* );
+FILE* makeFile ( char * );
+void orderedWrite ( BST *b, FILE *pf );
+void sortTrie ( Trie* , BST** );
+void scan ( char* , Stack* , unsigned char , char* );

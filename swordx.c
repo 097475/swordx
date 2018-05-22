@@ -1,29 +1,34 @@
+#include <ctype.h>
+#include <dirent.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <ctype.h>
-#include <getopt.h>
-#include <dirent.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "swordx.h"
 
 static int cmpstringp ( const void* , const void* );
 int isInArray ( char** , long , char* );
-void writeHelp();
+void writeHelp( char* );
 extern char *canonicalize_file_name(const char*);
 char* _getWord(FILE *pf); 
 void scan(char *path, Stack *files,unsigned char flags, char *explude);
 
-void getBlacklist(Trie *t, char *file)
-{
+void exitWithError(char *error) {
+	perror(error);
+	exit(EXIT_FAILURE);
+}
+
+void getBlacklist(Trie *t, char *file) {
 	char *str;
 	FILE *pf = fopen(file,"r");
-	if(pf==NULL) {perror("--ignore"); exit(EXIT_FAILURE);}
+	if(pf==NULL)
+		exitWithError("--ignore");
 	
 	while((str = _getWord(pf)) != NULL)
-			add(str,t); 
+		add(str,t); 
 	
 	fclose(pf);
 }
@@ -68,42 +73,30 @@ char* getWord(FILE *pf, int min, Trie *ignoreTrie, unsigned char flags) {
 
 FILE* open_file(char* path) {
 	FILE* pf = fopen(path,"rb");
-	if(pf == NULL) {
-		perror("Error reading");
-		exit(EXIT_FAILURE);
-	}
+	if(pf == NULL)
+		exitWithError("Error reading");
 	return pf;
 }
 
 FILE* makeFile(char *output) {
 	FILE *pf = fopen(output,"wb");
-	if(pf == NULL) {
-		perror("Error writing");
-		exit(EXIT_FAILURE);
-	}
+	if(pf == NULL)
+		exitWithError("Error writing");
 	return pf;
 }
 
-void writeWord(Trie *t,FILE *pf) {
-	fprintf(pf,"%s: %lu\r\n",t->value,t->occurrencies);
-}
-
-void orderedPrint(BST *b, FILE *pf) {
-	if(b != NULL){
-		orderedPrint(b->left,pf);
-		writeWord(b->word,pf);
-		orderedPrint(b->right,pf);
+void orderedWrite(BST *b, FILE *pf) {
+	if(b != NULL) {
+		orderedWrite(b->left,pf);
+		writeNodeInformation(b->word,pf);
+		orderedWrite(b->right,pf);
 	}
-
 }
 
-void sortTrie(Trie *t, BST **b){
+void sortTrie(Trie *t, BST **b) {
 	if(t == NULL) return;
 	if(t->occurrencies > 0)
-	{
-		//printf("%s\n",t->value);
 		addBST(b,t);
-	}
 
 	for(int i = 0; i < CHARSET; i++)
 		sortTrie(t->children[i],b);
@@ -112,15 +105,7 @@ void sortTrie(Trie *t, BST **b){
 void sbo(Trie *t, FILE *pf) {
 	BST **b = (BST**)malloc(sizeof(BST*));
 	sortTrie(t,b);
-	orderedPrint(*b,pf);
-}
-
-void visitTree(Trie *t, FILE *pf) {
-	if(t == NULL) return;
-	if(t->occurrencies > 0) // if the word occurrs at least one time...
-		writeWord(t,pf); // ... write the word in the file
-	for(int i = 0; i < CHARSET; i++)
-		visitTree(t->children[i],pf); // check each children of the node
+	orderedWrite(*b,pf);
 }
 
 Stack *arrayToStack(char **par, int np, char *explude, unsigned char flags) {
@@ -131,22 +116,21 @@ Stack *arrayToStack(char **par, int np, char *explude, unsigned char flags) {
 	struct stat filestats;
 	
 	for(int i = 0; i < np; i++) {
-		 if (lstat(par[i], &filestats) == -1) {
-        	perror("stat");
-        	exit(EXIT_FAILURE);
-   		 }
+		if (lstat(par[i], &filestats) == -1)
+			exitWithError("stat");
 		else
-		{
-			 printf("File type:                ");
-
    			switch (filestats.st_mode & S_IFMT) {
-    		case S_IFDIR:  printf("directory\n");scan(par[i],s,flags,explude);break;
-    		case S_IFREG:  printf("regular file\n"); push(s,par[i]);  break;
-    		default:fprintf(stderr,"Unknown file type \"%s\"\n",par[i]); exit(EXIT_FAILURE);break;
+				case S_IFDIR:
+					scan(par[i],s,flags,explude);
+					break;
+				case S_IFREG:
+					push(s,par[i]);
+					break;
+				default:
+					fprintf(stderr,"Unknown file type: \"%s\"\n",par[i]);
+					exit(EXIT_FAILURE);
+					break;
     		}
-		}
-
-		//if(explude!=NULL && !strcmp(par[i],explude)) continue; // to explude a file
 	}
     free(par);
     free(explude);
@@ -155,36 +139,29 @@ Stack *arrayToStack(char **par, int np, char *explude, unsigned char flags) {
 
 char *absPath(char *path) {
 	path = canonicalize_file_name(path); // return the link location also, following link2link
-	if(path == NULL) {
-		perror("getting absolute path");
-		exit(EXIT_FAILURE);
-	}
+	if(path == NULL)
+		exitWithError("Getting absolute path");
 	return path;
 }
 
-void scan(char *path, Stack *files,unsigned char flags, char *explude) {
+void scan(char *path, Stack *files, unsigned char flags, char *explude) {
 	Stack *folders = (Stack *)malloc(sizeof(Stack));
 	DIR *dirp;
 	struct dirent *dp;
 	
-	if(explude != NULL)
-		explude = absPath(explude);
-	else
-		explude = "";
+	if(explude != NULL)	explude = absPath(explude);
+	else				explude = "";
 	
 	path = absPath(path);
 	push(folders,path);
 	
     while(!isStackEmpty(folders)) {
 		path = pop(folders);
-		if (( dirp = opendir(path) ) == NULL) {
-			perror("Error opening dir");
-			exit(EXIT_FAILURE);
-		}
-		//~ printf("analayzing %s\n",path);
+		if (( dirp = opendir(path) ) == NULL)
+			exitWithError("Error opening dir");
+			
 		while( (dp = readdir(dirp)) != NULL)
 			if(strcmp(dp->d_name,"..") != 0 && strcmp(dp->d_name,".") != 0) {
-				
 				char *toInsert = malloc((strlen(dp->d_name) + strlen(path))*sizeof(char) + 2);
 				strcpy(toInsert,path);
 				strcat(toInsert,"/");
@@ -193,17 +170,13 @@ void scan(char *path, Stack *files,unsigned char flags, char *explude) {
 				if(strcmp(toInsert,explude) != 0) {
 					if(dp->d_type == DT_DIR && ((flags & RECURSE_FLAG) == RECURSE_FLAG))
 						push(folders,toInsert);
-						//~ printf("\tnew dir: %s\n", dp->d_name);
 					else if(dp->d_type == DT_REG)
 						push(files,toInsert);
-						//~ printf("\tnew file: %s\n", dp->d_name);
 					else if(dp->d_type == DT_LNK && (flags & FOLLOW_FLAG) == FOLLOW_FLAG) {
 						toInsert = absPath(toInsert);
 						struct stat *sb = malloc(sizeof(struct stat));
-						if (lstat(toInsert, sb) == -1) {
-							perror("stat");
-							exit(EXIT_FAILURE);
-						}
+						if (lstat(toInsert, sb) == -1)
+							exitWithError("stat");
 						switch (sb->st_mode & S_IFMT) {
 							case S_IFDIR: // points to a directory
 								if((flags & RECURSE_FLAG) == RECURSE_FLAG && strcmp(toInsert,explude) != 0)
@@ -214,13 +187,12 @@ void scan(char *path, Stack *files,unsigned char flags, char *explude) {
 									push(files,toInsert);
 								break;
 							default:
-								printf("\tI don't care about %s\n", dp->d_name);
+								printf("\tUnkown file type: \"%s\"\n", dp->d_name);
 								break;
 						}
-						//~ printf("\tnew link: %s\n", dp->d_name);
 					}
 					else
-						printf("Don't care about %s", dp->d_name);
+						printf("\tUnkown file type: \"%s\"\n", dp->d_name);
 				}
 			}
 	}
@@ -237,8 +209,7 @@ void execute(Stack* s, char** args, unsigned char flags) {
 		fprintf(stderr,"Error: Insert a valid value for --min | -m option. <num> must be > 0");
 		exit(EXIT_FAILURE);
 	}
-
-
+	
 	Trie *t = createTree();
 	Trie *ignoreTrie = createTree();
 	
@@ -247,8 +218,7 @@ void execute(Stack* s, char** args, unsigned char flags) {
 
 	char *src,*str;
 	FILE *pfread;
-	while(!isStackEmpty(s))
-	{
+	while(!isStackEmpty(s))	{
 		src = pop(s);
 		pfread = open_file(src);
 		while((str = getWord(pfread,min,ignoreTrie, flags)) != NULL)
@@ -261,7 +231,7 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	if(flags & SBO_FLAG)
 		sbo(t,pfwrite);
 	else
-		visitTree(t,pfwrite);
+		writeTrie(t,pfwrite);
 
 	fclose(pfwrite);
 }
@@ -272,78 +242,62 @@ int main(int argc, char *argv[]) {
 	unsigned char flags = 0; //1 byte integer field
 
     struct option long_options[] = {
-		{"help",    no_argument, 0,  0 },
-		{"recursive",  no_argument, 0,  1},
-		{"follow",  no_argument, 0,  2 },
-		{"explude", required_argument, 0,  3 },
-		{"alpha",  no_argument, 0,  4 },
-		{"min",    required_argument, 0,  5 },
-		{"ignore",  required_argument, 0,  6 },
-		{"sortbyoccurrency",  no_argument, 0,  7 },
-		{"sbo",  no_argument, 0,  7 },
-		{"output",  required_argument, 0,  8 },
-		{ NULL, 0, NULL, 0 }  //required
+		{	"help",				no_argument,		0,		0	},
+		{	"recursive",		no_argument,		0,		1	},
+		{	"follow",			no_argument,		0,		2	},
+		{	"explude",			required_argument,	0,		3	},
+		{	"alpha",			no_argument,		0,		4	},
+		{	"min",				required_argument,	0,		5	},
+		{	"ignore",			required_argument,	0,		6	},
+		{	"sortbyoccurrency",	no_argument,		0,		7	},
+		{	"sbo",				no_argument,		0,		7	},
+		{	"output",			required_argument,	0,		8	},
+		{	NULL,				0,					NULL,	0	}  //required
 	};
 
-	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:",long_options,NULL)) != -1)
-	{
-		switch(opt)
-		{
-			case 0:
-			case 'h': writeHelp(); break;
-			case 1:
-			case 'r':
-					flags |= RECURSE_FLAG;
-					break;
-			case 2:
-			case 'f':
-					flags |= FOLLOW_FLAG;
-					break;
-			case 3:
-			case 'e':
-					explude = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-					strcpy(explude,optarg);
-					break;
-			case 4:
-			case 'a':
-					flags |= ALPHA_FLAG;
-					break;
-			case 5:
-			case 'm':
-					min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-					strcpy(min,optarg);
-					break;
-			case 6:
-			case 'i':
-					ignore = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-					strcpy(ignore,optarg);
-					break;
+	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:",long_options,NULL)) != -1) {
+		switch(opt) {
+			case 0:	case 'h':
+				writeHelp(argv[0]); break;
+			case 1: case 'r':
+				flags |= RECURSE_FLAG; break;
+			case 2: case 'f':
+				flags |= FOLLOW_FLAG; break;
+			case 3: case 'e':
+				explude = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(explude,optarg); break;
+			case 4: case 'a':
+				flags |= ALPHA_FLAG; break;
+			case 5: case 'm':
+				min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(min,optarg); break;
+			case 6: case 'i':
+				ignore = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(ignore,optarg); break;
 			case 7:
-					flags |= SBO_FLAG;
-					break;
+				flags |= SBO_FLAG; break;
 			case 8:
-					output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-					strcpy(output,optarg);
-					break;
-			default: printf("default case");break;
+				output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(output,optarg); break;
+			default:
+				printf("default case");break;
 		}
 	}
 
-	args = (char**)malloc(3*sizeof(char*));
-	args[0] = min;
-	args[1] = ignore;
-	args[2] = output;
-
+	args	= (char**)malloc(3 * sizeof(char*));
+	args[0]	= min;
+	args[1]	= ignore;
+	args[2]	= output;
 
 	nparams = argc-optind;
-	params = (char**)malloc(nparams*sizeof(char*));
+	params = (char**)malloc(nparams * sizeof(char*));
+
 	for(int i = optind; i<argc; i++) { // make params
 		params[i-optind] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
 		strcpy(params[i-optind],argv[i]);
 	}
 	//create stack with params and nparams
 	Stack *s = arrayToStack(params,nparams,explude,flags);
-	//~ visitStack(s);
 	execute(s,args,flags);
 	exit(EXIT_SUCCESS);
 }
@@ -355,9 +309,10 @@ int isInArray(char *array[], long length, char *str) {
 static int cmpstringp(const void *p1, const void *p2) { // from "man qsort": the qsort method accepts void pointers only
 	return (strcmp(*(char **)p1, *(char **)p2));
 }
-void writeHelp() {
-	printf("swordx [options] [inputs]\n");
-	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) and print them into an output file.\n");
+
+void writeHelp(char *appname) {
+	printf("%s [options] [inputs]\n", appname);
+	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) in a file or a range of files and print them into a new file.\n");
 	printf("\n");
 	printf("   [inputs]\n");
 	printf("      the file and/or directory to process\n");

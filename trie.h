@@ -10,7 +10,8 @@ void add ( char* , Trie* );
 void printall ( Trie* );
 Trie* createTree ( void );
 int search(char*,Trie*);
-
+void writeTrie ( Trie* , FILE* );
+void writeNodeInformation ( Trie* , FILE* );
 
 typedef struct BST{
 Trie *word;
