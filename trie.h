@@ -14,9 +14,9 @@ void writeTrie ( Trie* , FILE* );
 void writeNodeInformation ( Trie* , FILE* );
 
 typedef struct BST{
-Trie *word;
-struct BST *left;
-struct BST *right;
+	Trie *wordInfo;
+	struct BST *left;
+	struct BST *right;
 }BST;
 
 

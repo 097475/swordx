@@ -13,8 +13,7 @@ int getIndex(char c) {
 		return c-'0';
 	else
 		if(!isalpha(c)) //accent
-			switch(c)
-			{
+			switch(c) {
 				case 'à' : return 11; break;
 				case 'è' : return 16; break;
 				case 'é': return 17; break;
@@ -22,8 +21,7 @@ int getIndex(char c) {
 				case 'ò': return 29; break;
 				case 'ù': return 36; break;
 			}
-		else
-		{
+		else {
 			short offset = 0;
 			if(c>='b' && c<='e') offset = 1;
 			if(c>='f' && c<='i') offset = 3;

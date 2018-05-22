@@ -24,8 +24,8 @@ void exitWithError(char *error) {
 void getBlacklist(Trie *t, char *file) {
 	char *str;
 	FILE *pf = fopen(file,"r");
-	if(pf==NULL)
-		exitWithError("--ignore");
+	if(pf == NULL)
+		exitWithError("opening file");
 	
 	while((str = _getWord(pf)) != NULL)
 		add(str,t); 
@@ -40,7 +40,6 @@ char* _getWord(FILE *pf) {
 	while(!isalnum(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
 	if(c == EOF) return NULL;
 	else ungetc(c,pf); // put the last char back
-
 
 	while(isalnum(c = getc(pf))) {
 		buf[ pos++ ] = tolower(c);
@@ -88,7 +87,7 @@ FILE* makeFile(char *output) {
 void orderedWrite(BST *b, FILE *pf) {
 	if(b != NULL) {
 		orderedWrite(b->left,pf);
-		writeNodeInformation(b->word,pf);
+		writeNodeInformation(b->wordInfo,pf);
 		orderedWrite(b->right,pf);
 	}
 }
@@ -205,8 +204,8 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	char *ignore = args[1];
 	char *output = (args[2] == NULL) ? "swordx.out" : args[2];
 
-	if(min<=0) {
-		fprintf(stderr,"Error: Insert a valid value for --min | -m option. <num> must be > 0");
+	if(min <= 0) {
+		fprintf(stderr,"Error: Insert a valid value for --min <num> | -m <num> option.\n\t<num> must be > 0");
 		exit(EXIT_FAILURE);
 	}
 	
@@ -285,12 +284,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	args	= (char**)malloc(3 * sizeof(char*));
-	args[0]	= min;
-	args[1]	= ignore;
-	args[2]	= output;
+	args[0]	= min;		// min word lenght
+	args[1]	= ignore;	// ignore file list
+	args[2]	= output;	// output filename
 
-	nparams = argc-optind;
-	params = (char**)malloc(nparams * sizeof(char*));
+	nparams = argc-optind; // number of input files
+	params = (char**)malloc(nparams * sizeof(char*)); // list of filenames
 
 	for(int i = optind; i<argc; i++) { // make params
 		params[i-optind] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
