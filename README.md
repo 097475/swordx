@@ -1,5 +1,4 @@
 # swordx 
 TODO :
-- allow maiusc letters and accents [097475]
-- allow regular expressions [097475]
+- multiple explude and ignore files (use a stack?) and glob compatibility (passed by "") (use glob function?)
 - parallel file parsing
