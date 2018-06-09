@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <glob.h>
 #include "swordx.h"
 
 static int cmpstringp ( const void* , const void* );
@@ -14,23 +15,28 @@ int isInArray ( char** , long , char* );
 void writeHelp( char* );
 extern char *canonicalize_file_name(const char*);
 char* _getWord(FILE *pf); 
-void scan(char *path, Stack *files,unsigned char flags, char *explude);
+void scan(char *path, Stack *files,unsigned char flags, Stack *explude);
+char *absPath(char *path);
 
 void exitWithError(char *error) {
 	perror(error);
 	exit(EXIT_FAILURE);
 }
 
-void getBlacklist(Trie *t, char *file) {
-	char *str;
-	FILE *pf = fopen(file,"r");
-	if(pf == NULL)
-		exitWithError("opening file");
+void getBlacklist(Trie *t, Stack *ignore) {
+	char *str,*src;
+	FILE *pf;
+	while(!isStackEmpty(ignore))	{
+		src = pop(ignore);
+		pf = fopen(src,"r");
+		if(pf == NULL)
+			exitWithError("opening file");
+		while((str = _getWord(pf)) != NULL)
+			add(str,t); 
 	
-	while((str = _getWord(pf)) != NULL)
-		add(str,t); 
-	
-	fclose(pf);
+		fclose(pf);
+		}
+	free(ignore);
 }
 
 char* _getWord(FILE *pf) {
@@ -107,7 +113,31 @@ void sbo(Trie *t, FILE *pf) {
 	orderedWrite(*b,pf);
 }
 
-Stack *arrayToStack(char **par, int np, char *explude, unsigned char flags) {
+Stack* expand(Stack *toExpand)
+{
+	char* tmp;
+	Stack *result = (Stack*)malloc(sizeof(Stack));
+	result->value = NULL;
+	result->next = NULL;
+	glob_t globbuf;
+	while(!isStackEmpty(toExpand))	{
+		tmp = pop(toExpand);
+		if(glob(tmp, 0,NULL, &globbuf)!= GLOB_NOMATCH)
+		{
+			for(int i = 0; i < globbuf.gl_pathc; i++)
+			{
+				push(result,absPath(globbuf.gl_pathv[i]));	
+			}
+		}
+
+	}
+	free(toExpand);
+	return result;
+}
+
+
+
+Stack *arrayToStack(char **par, int np, Stack *explude, unsigned char flags) {
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 	s->value = NULL;
 	s->next = NULL;
@@ -131,8 +161,7 @@ Stack *arrayToStack(char **par, int np, char *explude, unsigned char flags) {
 					break;
     		}
 	}
-    free(par);
-    free(explude);
+	free(par);
 	return s;
 }
 
@@ -143,14 +172,13 @@ char *absPath(char *path) {
 	return path;
 }
 
-void scan(char *path, Stack *files, unsigned char flags, char *explude) {
+void scan(char *path, Stack *files, unsigned char flags, Stack *_explude) {
 	Stack *folders = (Stack *)malloc(sizeof(Stack));
 	DIR *dirp;
 	struct dirent *dp;
-	
-	if(explude != NULL)	explude = absPath(explude);
-	else				explude = "";
-	
+
+	Stack *explude = expand(_explude);
+
 	path = absPath(path);
 	push(folders,path);
 	
@@ -166,7 +194,7 @@ void scan(char *path, Stack *files, unsigned char flags, char *explude) {
 				strcat(toInsert,"/");
 				strcat(toInsert,dp->d_name);
 				
-				if(strcmp(toInsert,explude) != 0) {
+				if(searchStack(explude,toInsert)==0) {
 					if(dp->d_type == DT_DIR && ((flags & RECURSE_FLAG) == RECURSE_FLAG))
 						push(folders,toInsert);
 					else if(dp->d_type == DT_REG)
@@ -178,11 +206,11 @@ void scan(char *path, Stack *files, unsigned char flags, char *explude) {
 							exitWithError("stat");
 						switch (sb->st_mode & S_IFMT) {
 							case S_IFDIR: // points to a directory
-								if((flags & RECURSE_FLAG) == RECURSE_FLAG && strcmp(toInsert,explude) != 0)
+								if((flags & RECURSE_FLAG) == RECURSE_FLAG && searchStack(explude,toInsert)==0)
 									push(folders,toInsert);
 								break;
 							case S_IFREG: // points to a regular file
-								if(strcmp(toInsert,explude) != 0)
+								if(searchStack(explude,toInsert)==0)
 									push(files,toInsert);
 								break;
 							default:
@@ -191,7 +219,7 @@ void scan(char *path, Stack *files, unsigned char flags, char *explude) {
 						}
 					}
 					else
-						printf("\tUnkown file type: \"%s\"\n", dp->d_name);
+						printf("\tSkipped file(s) (add -r or -f to analyze them too!): \"%s\"\n", dp->d_name);
 				}
 			}
 	}
@@ -199,21 +227,16 @@ void scan(char *path, Stack *files, unsigned char flags, char *explude) {
     free(folders);
 }
 
-void execute(Stack* s, char** args, unsigned char flags) {
+void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	int min = (args[0] == NULL) ? 1 : atoi(args[0]);
-	char *ignore = args[1];
-	char *output = (args[2] == NULL) ? "swordx.out" : args[2];
-
+	char *output = (args[1] == NULL) ? "swordx.out" : args[1];
 	if(min <= 0) {
 		fprintf(stderr,"Error: Insert a valid value for --min <num> | -m <num> option.\n\t<num> must be > 0");
 		exit(EXIT_FAILURE);
 	}
 	
 	Trie *t = createTree();
-	Trie *ignoreTrie = createTree();
-	
-	if(ignore!=NULL)
-		getBlacklist(ignoreTrie,ignore);
+
 
 	char *src,*str;
 	FILE *pfread;
@@ -237,7 +260,13 @@ void execute(Stack* s, char** args, unsigned char flags) {
 
 int main(int argc, char *argv[]) {
 	int opt = 0, nparams = 0;
-	char *explude = NULL,*ignore = NULL,*output = NULL, *min = NULL, **args, **params;
+	char *str = NULL,*output = NULL, *min = NULL, **args, **params;
+	Stack *_explude = (Stack *)malloc(sizeof(Stack));
+	Stack *_ignore = (Stack *)malloc(sizeof(Stack));
+	_explude->value = NULL;
+	_explude->next = NULL;
+	_ignore->value = NULL;
+	_ignore->next = NULL;
 	unsigned char flags = 0; //1 byte integer field
 
     struct option long_options[] = {
@@ -263,16 +292,18 @@ int main(int argc, char *argv[]) {
 			case 2: case 'f':
 				flags |= FOLLOW_FLAG; break;
 			case 3: case 'e':
-				explude = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-				strcpy(explude,optarg); break;
+				str = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(str,optarg);
+				push(_explude,str);  ;break;
 			case 4: case 'a':
 				flags |= ALPHA_FLAG; break;
 			case 5: case 'm':
 				min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
 				strcpy(min,optarg); break;
 			case 6: case 'i':
-				ignore = (char*)malloc((strlen(optarg)+1)*sizeof(char));
-				strcpy(ignore,optarg); break;
+				str = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				strcpy(str,optarg);
+				push(_ignore,str); break;
 			case 7:
 				flags |= SBO_FLAG; break;
 			case 8:
@@ -283,10 +314,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	args	= (char**)malloc(3 * sizeof(char*));
+	args	= (char**)malloc(2 * sizeof(char*));
 	args[0]	= min;		// min word lenght
-	args[1]	= ignore;	// ignore file list
-	args[2]	= output;	// output filename
+	args[1]	= output;	// output filename
 
 	nparams = argc-optind; // number of input files
 	params = (char**)malloc(nparams * sizeof(char*)); // list of filenames
@@ -296,8 +326,14 @@ int main(int argc, char *argv[]) {
 		strcpy(params[i-optind],argv[i]);
 	}
 	//create stack with params and nparams
-	Stack *s = arrayToStack(params,nparams,explude,flags);
-	execute(s,args,flags);
+	Stack *s = arrayToStack(params,nparams,_explude,flags);
+
+	//create ignore trie
+	Stack *ignore = expand(_ignore);
+	Trie *ignoreTrie = createTree();
+	getBlacklist(ignoreTrie,ignore);
+	
+	execute(s,args,ignoreTrie,flags);
 	exit(EXIT_SUCCESS);
 }
 

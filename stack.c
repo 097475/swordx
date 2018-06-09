@@ -39,8 +39,14 @@ void visitStack(Stack *s) {
 	printf("%s\n",top(s));
 	return visitStack(s->next);
 }
-/*
-int main(int argc, char **argv) {
+
+int searchStack(Stack *s, char *needle){
+	if(top(s) == NULL) return 0;
+	else return strcmp(top(s),needle) ? searchStack(s->next,needle) : 1;
+	
+}
+
+/*int main(int argc, char **argv) {
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 	s->value = NULL;
 	s->next = NULL;
@@ -51,5 +57,5 @@ int main(int argc, char **argv) {
 	while(!isStackEmpty(s))
 		printf("%s\n",pop(s));
 	return 0;
-}
-*/
+}*/
+
