@@ -17,6 +17,7 @@ void push(Stack *s, char *str) {
 	// next is null
 	ns->next = s->next;
 	s->next = ns;
+	printf("stack qui1\n");
 	free(str);
 }
 
@@ -30,6 +31,7 @@ char *pop(Stack *s) {
 	char *res = s->next->value;
 	Stack *toFree = s->next;
 	s->next = s->next->next;
+	printf("stack qui2\n");
 	free(toFree);
 	return res;
 }
@@ -39,14 +41,8 @@ void visitStack(Stack *s) {
 	printf("%s\n",top(s));
 	return visitStack(s->next);
 }
-
-int searchStack(Stack *s, char *needle){
-	if(top(s) == NULL) return 0;
-	else return strcmp(top(s),needle) ? searchStack(s->next,needle) : 1;
-	
-}
-
-/*int main(int argc, char **argv) {
+/*
+int main(int argc, char **argv) {
 	Stack *s = (Stack *)malloc(sizeof(Stack));
 	s->value = NULL;
 	s->next = NULL;
@@ -57,5 +53,5 @@ int searchStack(Stack *s, char *needle){
 	while(!isStackEmpty(s))
 		printf("%s\n",pop(s));
 	return 0;
-}*/
-
+}
+*/

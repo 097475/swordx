@@ -10,4 +10,4 @@ FILE* open_file ( char* );
 FILE* makeFile ( char * );
 void orderedWrite ( BST *b, FILE *pf );
 void sortTrie ( Trie* , BST** );
-void scan ( char* , Stack* , unsigned char , Stack* );
+void scan ( char* , Stack* , unsigned char , char* );
