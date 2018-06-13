@@ -3,6 +3,14 @@
 #include <string.h>
 #include "stack.h"
 
+
+Stack* createStack() {
+	Stack *s = (Stack*)malloc(sizeof(Stack));
+	s->value = NULL;
+	s->next = NULL;
+	return s;
+}
+
 int isStackEmpty(Stack *s) {
 	return s->next == NULL;
 }
@@ -40,22 +48,9 @@ void visitStack(Stack *s) {
 	return visitStack(s->next);
 }
 
+
 int searchStack(Stack *s, char *needle){
 	if(top(s) == NULL) return 0;
 	else return strcmp(top(s),needle) ? searchStack(s->next,needle) : 1;
-	
 }
-
-/*int main(int argc, char **argv) {
-	Stack *s = (Stack *)malloc(sizeof(Stack));
-	s->value = NULL;
-	s->next = NULL;
-	push(s,"o");
-	push(s,"a");
-	push(s,"i");
-	push(s,"c");
-	while(!isStackEmpty(s))
-		printf("%s\n",pop(s));
-	return 0;
-}*/
 

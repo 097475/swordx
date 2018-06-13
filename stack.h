@@ -8,5 +8,5 @@ void push ( Stack * , char * );
 char *top ( Stack * );
 char *pop ( Stack * );
 int searchStack(Stack *s, char *needle);
-
+Stack* createStack();
 void visitStack ( Stack * );

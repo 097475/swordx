@@ -8,7 +8,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <glob.h>
+#include <pthread.h>
 #include "swordx.h"
+#include "ThreadIdStack.h"
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int cmpstringp ( const void* , const void* );
 int isInArray ( char** , long , char* );
@@ -17,6 +21,14 @@ extern char *canonicalize_file_name(const char*);
 char* _getWord(FILE *pf); 
 void scan(char *path, Stack *files,unsigned char flags, Stack *explude);
 char *absPath(char *path);
+
+Trie* t;
+struct ThreadArgs {
+	char* src;
+	int min;
+	Trie* ignoreTrie;
+	unsigned char flags;
+};
 
 void exitWithError(char *error) {
 	perror(error);
@@ -42,7 +54,6 @@ void getBlacklist(Trie *t, Stack *ignore) {
 char* _getWord(FILE *pf) {
 	char c, buf[500]; // c is the character, buf is the word
 	int pos = 0; // index
-
 	while(!isalnum(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
 	if(c == EOF) return NULL;
 	else ungetc(c,pf); // put the last char back
@@ -116,9 +127,7 @@ void sbo(Trie *t, FILE *pf) {
 Stack* expand(Stack *toExpand)
 {
 	char* tmp;
-	Stack *result = (Stack*)malloc(sizeof(Stack));
-	result->value = NULL;
-	result->next = NULL;
+	Stack *result = createStack();
 	glob_t globbuf;
 	while(!isStackEmpty(toExpand))	{
 		tmp = pop(toExpand);
@@ -137,11 +146,9 @@ Stack* expand(Stack *toExpand)
 
 
 
-Stack *arrayToStack(char **par, int np, Stack *explude, unsigned char flags) {
-	Stack *s = (Stack *)malloc(sizeof(Stack));
-	s->value = NULL;
-	s->next = NULL;
-
+Stack *arrayToStack(char **par, int np, Stack *_explude, unsigned char flags) {
+	Stack *s = createStack();
+	Stack *explude = expand(_explude);
 	struct stat filestats;
 	
 	for(int i = 0; i < np; i++) {
@@ -172,13 +179,11 @@ char *absPath(char *path) {
 	return path;
 }
 
-void scan(char *path, Stack *files, unsigned char flags, Stack *_explude) {
-	Stack *folders = (Stack *)malloc(sizeof(Stack));
+void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
+	Stack *folders = createStack();
 	DIR *dirp;
 	struct dirent *dp;
-
-	Stack *explude = expand(_explude);
-
+	
 	path = absPath(path);
 	push(folders,path);
 	
@@ -227,27 +232,83 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *_explude) {
     free(folders);
 }
 
+void* threadFun(void* arg) {
+	
+	printf("\tgetting args\n\n");
+	
+	struct ThreadArgs* a = (struct ThreadArgs*)arg;
+	char* str;
+	
+	printf("\topening file %s\n\n",a->src);
+	
+	FILE *pfread = open_file(a->src);
+	while((str = getWord(pfread,a->min,a->ignoreTrie,a->flags)) != NULL) {
+		pthread_mutex_lock(&mutex);
+			add(str,t); // add the word to the trie (starting from the 1st level)
+		pthread_mutex_unlock(&mutex);
+	}
+	
+	fclose(pfread);
+	
+	//~ printf("\tfreeing src\n\n");
+	
+	//~ free(a->src);
+	
+	printf("\tthread done\n\n");
+	
+	return NULL;
+}
+
 void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	int min = (args[0] == NULL) ? 1 : atoi(args[0]);
 	char *output = (args[1] == NULL) ? "swordx.out" : args[1];
+
 	if(min <= 0) {
 		fprintf(stderr,"Error: Insert a valid value for --min <num> | -m <num> option.\n\t<num> must be > 0");
 		exit(EXIT_FAILURE);
 	}
 	
-	Trie *t = createTree();
+	t = createTree();
+	
+	// --- Threads Part ---
+	char* src;
+	ThreadIdStack *ts = createThreadIdStack();
 
-
-	char *src,*str;
-	FILE *pfread;
+	pthread_t tid;
+	pthread_t *ptid;
 	while(!isStackEmpty(s))	{
+			printf("popping src\n\n");
 		src = pop(s);
-		pfread = open_file(src);
-		while((str = getWord(pfread,min,ignoreTrie, flags)) != NULL)
-			add(str,t); // add the word to the trie (starting from the 1st level)
-		fclose(pfread);
-		free(src);
+			printf("allocing threadArgs\n\n");
+		struct ThreadArgs* a = malloc(sizeof(struct ThreadArgs*));
+			printf("inserting args into threadargs\n\n");
+		a->src = src;
+		a->min = min;
+		a->ignoreTrie = ignoreTrie;
+		a->flags = flags;
+			printf("done\n\n");
+			printf("creating thread\n\n");
+		int err = pthread_create(&tid, NULL, &threadFun, a);
+			printf("done\n\n");
+		if (err != 0)
+			exitWithError("Can't create thread");
+		else {
+				printf("pushing the thread into the stack (tid = %lu)\n\n",tid);
+			threadIdPush(ts,&tid);
+		}
 	}
+		printf("waiting for threads\n\n");
+	while(!isThreadIdStackEmpty(ts)) {
+			printf("\t\tgetting tid\n\n");
+		ptid = threadIdPop(ts);
+			printf("\t\twaiting %lu\n\n",*ptid);
+		pthread_join(*ptid,NULL);
+			printf("\t\t%lu done\n\n",*ptid);
+		free(ptid);
+	}
+		printf("bye bye bye bye\n");
+	//~ printall(t);
+	// --- END Threads Part ---
 	FILE *pfwrite = makeFile(output);
 
 	if(flags & SBO_FLAG)
@@ -261,12 +322,8 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 int main(int argc, char *argv[]) {
 	int opt = 0, nparams = 0;
 	char *str = NULL,*output = NULL, *min = NULL, **args, **params;
-	Stack *_explude = (Stack *)malloc(sizeof(Stack));
-	Stack *_ignore = (Stack *)malloc(sizeof(Stack));
-	_explude->value = NULL;
-	_explude->next = NULL;
-	_ignore->value = NULL;
-	_ignore->next = NULL;
+	Stack *_explude = createStack();
+	Stack *_ignore = createStack();
 	unsigned char flags = 0; //1 byte integer field
 
     struct option long_options[] = {
@@ -332,7 +389,7 @@ int main(int argc, char *argv[]) {
 	Stack *ignore = expand(_ignore);
 	Trie *ignoreTrie = createTree();
 	getBlacklist(ignoreTrie,ignore);
-	
+
 	execute(s,args,ignoreTrie,flags);
 	exit(EXIT_SUCCESS);
 }
