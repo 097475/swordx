@@ -9,8 +9,8 @@ int isThreadIdStackEmpty(ThreadIdStack *s) {
 
 ThreadIdStack* createThreadIdStack() {
 	ThreadIdStack* ret = malloc(sizeof(ThreadIdStack*));
-	ts->tid = NULL;
-	ts->next = NULL;
+	ret->tid = NULL;
+	ret->next = NULL;
 	return ret;
 }
 
