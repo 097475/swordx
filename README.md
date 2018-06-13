@@ -1,4 +1,21 @@
 # swordx 
-TODO :
-- multiple explude and ignore files (use a stack?) and glob compatibility (passed by "") (use glob function?)
-- parallel file parsing
+BST.c
+Trie.c
+main()
+arrayToStack()
+expand()
+sbo()
+sortTrie()
+getWord()
+_getWord()
+getBlacklist()
+_isalphanum()
+absPath()
+==================
+ThreadIdStack.c
+Stack.c
+scan()
+threadFun()
+execute()
+isInArray()
+cmpstringp()
