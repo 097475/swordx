@@ -3,6 +3,8 @@ typedef struct ThreadIdStack {
     pthread_t *tid;
 } ThreadIdStack;
 
+ThreadIdStack* createThreadIdStack();
+
 void threadIdPush ( ThreadIdStack* , pthread_t* );
 pthread_t *threadIdPop ( ThreadIdStack* );
 
