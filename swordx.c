@@ -101,13 +101,7 @@ FILE* makeFile(char *output) {
 	return pf;
 }
 
-void orderedWrite(BST *b, FILE *pf) {
-	if(b != NULL) {
-		orderedWrite(b->left,pf);
-		writeNodeInformation(b->wordInfo,pf);
-		orderedWrite(b->right,pf);
-	}
-}
+
 
 void sortTrie(Trie *t, BST **b) {
 	if(t == NULL) return;
@@ -121,7 +115,7 @@ void sortTrie(Trie *t, BST **b) {
 void sbo(Trie *t, FILE *pf) {
 	BST **b = (BST**)malloc(sizeof(BST*));
 	sortTrie(t,b);
-	orderedWrite(*b,pf);
+	writeTree(*b,pf);
 }
 
 Stack* expand(Stack *toExpand)

@@ -22,3 +22,4 @@ typedef struct BST{
 
 void addBST(BST **b, Trie *t);
 void printBST(BST *b);
+void writeTree(BST *b, FILE *pf);
