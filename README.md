@@ -1,4 +1,5 @@
 # swordx 
+
 BST.c
 Trie.c
 main()
@@ -11,7 +12,9 @@ _getWord()
 getBlacklist()
 _isalphanum()
 absPath()
+
 ==================
+
 ThreadIdStack.c
 Stack.c
 scan()
