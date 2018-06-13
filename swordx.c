@@ -7,8 +7,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "swordx.h"
 #include <pthread.h>
+#include "swordx.h"
 #include "ThreadIdStack.h"
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -259,11 +259,10 @@ void execute(Stack* s, char** args, unsigned char flags) {
 	
 	// --- Threads Part ---
 	char* src;
-	ThreadIdStack *ts = malloc(sizeof(ThreadIdStack*));
-	ts->tid = NULL;
-	ts->next = NULL;
+	ThreadIdStack *ts = createThreadIdStack();
 
-	pthread_t* tid;
+	pthread_t tid;
+	pthread_t *ptid;
 	while(!isStackEmpty(s))	{
 			printf("popping src\n\n");
 		src = pop(s);
@@ -276,23 +275,23 @@ void execute(Stack* s, char** args, unsigned char flags) {
 		a->flags = flags;
 			printf("done\n\n");
 			printf("creating thread\n\n");
-		int err = pthread_create(tid, NULL, &threadFun, a);
+		int err = pthread_create(&tid, NULL, &threadFun, a);
 			printf("done\n\n");
 		if (err != 0)
 			exitWithError("Can't create thread");
 		else {
-				printf("pushing the thread into the stack (tid = %lu)\n\n",*tid);
-			threadIdPush(ts,tid);
+				printf("pushing the thread into the stack (tid = %lu)\n\n",tid);
+			threadIdPush(ts,&tid);
 		}
 	}
 		printf("waiting for threads\n\n");
 	while(!isThreadIdStackEmpty(ts)) {
 			printf("\t\tgetting tid\n\n");
-		tid = threadIdPop(ts);
-			printf("\t\twaiting %lu\n\n",*tid);
-		pthread_join(*tid,NULL);
-			printf("\t\t%lu done\n\n",*tid);
-		free(tid);
+		ptid = threadIdPop(ts);
+			printf("\t\twaiting %lu\n\n",*ptid);
+		pthread_join(*ptid,NULL);
+			printf("\t\t%lu done\n\n",*ptid);
+		free(ptid);
 	}
 		printf("bye bye bye bye\n");
 	//~ printall(t);

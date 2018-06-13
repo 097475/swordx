@@ -7,6 +7,13 @@ int isThreadIdStackEmpty(ThreadIdStack *s) {
 	return s->next == NULL;
 }
 
+ThreadIdStack* createThreadIdStack() {
+	ThreadIdStack* ret = malloc(sizeof(ThreadIdStack*));
+	ts->tid = NULL;
+	ts->next = NULL;
+	return ret;
+}
+
 void threadIdPush(ThreadIdStack *s, pthread_t *intid) {
 	// create a new stack piece
 	ThreadIdStack *ns = (ThreadIdStack *)malloc(sizeof(ThreadIdStack));
@@ -39,7 +46,7 @@ pthread_t* threadIdPop(ThreadIdStack *s) {
 	ThreadIdStack* toFree = s->next;
 	s->next = s->next->next;
 	printf("makeing free %p (tid = %lu, next = %p) (actual root next = %p)\n", toFree, *toFree->tid, toFree->next, s->next);
-	//~ free(toFree);
+	free(toFree);
 	printf("\t\t\t\tdone\n\n");
 	return res;
 }
