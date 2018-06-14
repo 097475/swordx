@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include "trie.h"
 
+int getIndex(char c);
 void addRecord ( char* , Trie* , int );
 void _add ( char* , Trie* , int );
 int _search(char *str, Trie *t, int level);
@@ -14,12 +15,12 @@ int getIndex(char c) {
 	else
 		if(!isalpha(c)) //accent
 			switch(c) {
-				case 'à' : return 11; break;
-				case 'è' : return 16; break;
-				case 'é': return 17; break;
-				case 'ì': return 22; break;
-				case 'ò': return 29; break;
-				case 'ù': return 36; break;
+				case 'Ã ' : return 11; break;
+				case 'Ã¨' : return 16; break;
+				case 'Ã©': return 17; break;
+				case 'Ã¬': return 22; break;
+				case 'Ã²': return 29; break;
+				case 'Ã¹': return 36; break;
 			}
 		else {
 			short offset = 0;
@@ -124,36 +125,4 @@ Trie* createTree() {
 	for(int i = 0; i < CHARSET; i++)
 		t->children[i] = NULL;
 	return t;
-}
-
-
-
-void addBST(BST **b, Trie *t) {
-	if(*b == NULL) {
-		*b = (BST*) malloc(sizeof(BST));
-		(*b)->wordInfo	= t;
-		(*b)->left	= NULL;
-		(*b)->right	= NULL;
-	}
-	else
-		if(t->occurrencies < ((*b)->wordInfo)->occurrencies)
-			addBST(&(*b)->left,t);
-		else
-			addBST(&(*b)->right,t);
-}
-
-void writeTree(BST *b, FILE *pf) {
-	if(b != NULL) {
-		writeTree(b->left,pf);
-		writeNodeInformation(b->wordInfo,pf);
-		writeTree(b->right,pf);
-	}
-}
-
-void printBST(BST *b) {
-	if(b!=NULL) {
-		printBST(b->left);
-		printf("%s\n",b->wordInfo->value);
-		printBST(b->right);
-	}
 }
