@@ -36,7 +36,7 @@ int getIndex(char c) {
 
 int _search(char *str, Trie *t, int level) { 
 		Trie *next = t->children[getIndex(str[level - 1])];
-		if(next!=NULL && strncmp(str,next->value,level) == 0)
+		if(next!=NULL && strncmp(str,next->value,level) == 0) //rimuovere strncmp
 			if(level == strlen(str)) 
 				return 1;
 			else { 
