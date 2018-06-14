@@ -13,7 +13,7 @@ int getIndex(char c) {
 	if(isdigit(c))
 		return c-'0';
 	else
-		if(!isalpha(c)) //accent
+		if(!isalpha(c)) 
 			switch(c) {
 				case 'à' : return 11; break;
 				case 'è' : return 16; break;
@@ -34,7 +34,7 @@ int getIndex(char c) {
 		}
 }
 
-int _search(char *str, Trie *t, int level) { //str is never null, trie is never null
+int _search(char *str, Trie *t, int level) { 
 		Trie *next = t->children[getIndex(str[level - 1])];
 		if(next!=NULL && strncmp(str,next->value,level) == 0)
 			if(level == strlen(str)) 
@@ -48,7 +48,7 @@ int _search(char *str, Trie *t, int level) { //str is never null, trie is never 
 }
 
 int search(char *str, Trie *t) {
-	return _search(str,t,1);
+	return (str==NULL) ? 0 : _search(str,t,1);
 }
 
 void addRecord(char* str, Trie *t, int level) {
@@ -57,7 +57,6 @@ void addRecord(char* str, Trie *t, int level) {
 		n->value = (char*)malloc((level+1)*sizeof(char));
 		strncpy(n->value,str,level);
 		n->value[level] = '\0';
-		//snprintf(n->value, level + 1, "%s", str); //space for null character
 		
         for(int j = 0; j < CHARSET; j++)
 			n->children[j] = NULL;
