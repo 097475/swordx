@@ -9,7 +9,7 @@ void addRecord ( char* , Trie* , int );
 void _add ( char* , Trie* , int );
 int _search(char * , Trie * , int );
 
-int getIndex(char c) {
+int getIndex(char c) {  //modificare
 	if(isdigit(c))
 		return c-'0';
 	else
