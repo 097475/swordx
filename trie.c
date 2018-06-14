@@ -79,7 +79,7 @@ void _add (char* str, Trie *t, int level) {
 	Trie *next = t->children[getIndex(str[level - 1])]; // next is the next char of str (the root in a trie is empty)
 	
 	// if the childern is initialized and the next node has the same value of the substring... 
-	if(next != NULL && strncmp(str,next->value,level) == 0) {
+	if(next != NULL && strncmp(str,next->value,level) == 0) {  //forse rimuovere strncmp
 		if(level == strlen(str)) // .. if it's the whole word, increase the next's occurrencies
 			next->occurrencies++;
 		else { // .. else check the next level
