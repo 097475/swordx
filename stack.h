@@ -3,10 +3,10 @@ typedef struct Stack {
     char *value;
 } Stack;
 
-int isStackEmpty ( Stack* );
+int isStackEmpty ( Stack * );
 void push ( Stack * , char * );
-char *top ( Stack * );
-char *pop ( Stack * );
-int searchStack(Stack *s, char *needle);
+char* top ( Stack * );
+char* pop ( Stack * );
+int searchStack(Stack * , char * );
 Stack* createStack();
 void visitStack ( Stack * );
