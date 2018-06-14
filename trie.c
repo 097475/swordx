@@ -53,7 +53,7 @@ int search(char *str, Trie *t) {
 
 void addRecord(char* str, Trie *t, int level) {
 	Trie *n = (Trie*)malloc(sizeof(Trie));
-	if(t->children[getIndex(str[level - 1])] == NULL) {
+	if(t->children[getIndex(str[level - 1])] == NULL) {  //forse togliere if
 		n->value = (char*)malloc((level+1)*sizeof(char));
 		strncpy(n->value,str,level);
 		n->value[level] = '\0';
