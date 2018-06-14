@@ -9,6 +9,7 @@ typedef struct Trie {
 	struct Trie *children[CHARSET];
 } Trie;
 
+
 void add ( char* , Trie* );
 void printall ( Trie* );
 Trie* createTree ( void );
