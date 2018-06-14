@@ -1,3 +1,6 @@
+#ifndef TRIE_H
+#define TRIE_H
+
 #define CHARSET 42
 
 typedef struct Trie {
@@ -23,3 +26,5 @@ typedef struct BST{
 void addBST(BST **b, Trie *t);
 void printBST(BST *b);
 void writeTree(BST *b, FILE *pf);
+
+#endif
