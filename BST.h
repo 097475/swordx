@@ -1,3 +1,4 @@
+#include "trie.h"
 typedef struct BST{
 	Trie *wordInfo;
 	struct BST *left;
