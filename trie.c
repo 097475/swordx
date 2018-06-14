@@ -9,34 +9,16 @@ void addRecord ( char* , Trie* , int );
 void _add ( char* , Trie* , int );
 int _search(char * , Trie * , int );
 
-int getIndex(char c) {  //modificare
+int getIndex(char c) { 
 	if(isdigit(c))
 		return c-'0';
 	else
-		if(!isalpha(c)) 
-			switch(c) {
-				case 'à' : return 11; break;
-				case 'è' : return 16; break;
-				case 'é': return 17; break;
-				case 'ì': return 22; break;
-				case 'ò': return 29; break;
-				case 'ù': return 36; break;
-			}
-		else {
-			short offset = 0;
-			if(c>='b' && c<='e') offset = 1;
-			if(c>='f' && c<='i') offset = 3;
-			if(c>='j'&&c<='o') offset = 4;
-			if(c>='p' && c<='u') offset = 5;
-			if(c>='v' && c<='z') offset = 6;
-			
-			return c - 'a' + 10 + offset;
-		}
+		return c - 'a' + 10;
 }
 
 int _search(char *str, Trie *t, int level) { 
 		Trie *next = t->children[getIndex(str[level - 1])];
-		if(next!=NULL && strncmp(str,next->value,level) == 0) //rimuovere strncmp
+		if(next!=NULL) //rimuovere strncmp
 			if(level == strlen(str)) 
 				return 1;
 			else { 
@@ -53,17 +35,17 @@ int search(char *str, Trie *t) {
 
 void addRecord(char* str, Trie *t, int level) {
 	Trie *n = (Trie*)malloc(sizeof(Trie));
-	if(t->children[getIndex(str[level - 1])] == NULL) {  //forse togliere if
-		n->value = (char*)malloc((level+1)*sizeof(char));
-		strncpy(n->value,str,level);
-		n->value[level] = '\0';
-		
-        for(int j = 0; j < CHARSET; j++)
-			n->children[j] = NULL;
-		n->occurrencies = 0;
-		t->children[getIndex(str[level - 1])] = n;
 
-	}
+	n->value = (char*)malloc((level+1)*sizeof(char));
+	strncpy(n->value,str,level);
+	n->value[level] = '\0';	
+	
+    for(int j = 0; j < CHARSET; j++)
+		n->children[j] = NULL;
+		
+	n->occurrencies = 0;
+	t->children[getIndex(str[level - 1])] = n;
+
     if(level == strlen(str)) {
 		n->occurrencies++;
         free(str);
@@ -79,7 +61,7 @@ void _add (char* str, Trie *t, int level) {
 	Trie *next = t->children[getIndex(str[level - 1])]; // next is the next char of str (the root in a trie is empty)
 	
 	// if the childern is initialized and the next node has the same value of the substring... 
-	if(next != NULL && strncmp(str,next->value,level) == 0) {  //forse rimuovere strncmp
+	if(next != NULL) {  //forse rimuovere strncmp
 		if(level == strlen(str)) // .. if it's the whole word, increase the next's occurrencies
 			next->occurrencies++;
 		else { // .. else check the next level
