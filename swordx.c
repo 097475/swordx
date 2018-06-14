@@ -410,6 +410,6 @@ void writeHelp(char *appname) {
 	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
 	printf("      -i <file> | --ignore <file> : all words contained in <file> are ignored (one per line)\n");
 	printf("\n");
-	printf("      --sordbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
+	printf("      --sortbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
 }
 
