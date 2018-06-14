@@ -41,7 +41,7 @@ int _search(char *str, Trie *t, int level) {
 				return 1;
 			else { 
 				level++;
-				_search(str,next,level);
+				return _search(str,next,level);
 			}
 		else
 			return 0;
