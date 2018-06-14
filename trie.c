@@ -7,7 +7,7 @@
 int getIndex(char c);
 void addRecord ( char* , Trie* , int );
 void _add ( char* , Trie* , int );
-int _search(char *str, Trie *t, int level);
+int _search(char * , Trie * , int );
 
 int getIndex(char c) {
 	if(isdigit(c))
