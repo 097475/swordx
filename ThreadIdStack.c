@@ -24,11 +24,9 @@ void threadIdPush(ThreadIdStack *s, pthread_t *intid) {
 	// next is null
 	ns->next = s->next;
 	s->next = ns;
-	//~ printf("\tinserted %lu\n", *(s->next->tid));
-//	free(intid);
 }
 
-pthread_t *topT(ThreadIdStack *s) {
+pthread_t* topT(ThreadIdStack *s) {
 	if(s->next == NULL) return NULL;
 	return s->next->tid;
 }
@@ -42,11 +40,8 @@ void visitThreadsStack(ThreadIdStack *s) {
 pthread_t* threadIdPop(ThreadIdStack *s) {
 	if(isThreadIdStackEmpty(s)) return NULL;
 	pthread_t* res = s->next->tid;
-	//~ printf("\treturning %lu\n", *res);
 	ThreadIdStack* toFree = s->next;
 	s->next = s->next->next;
-	printf("makeing free %p (tid = %lu, next = %p) (actual root next = %p)\n", toFree, *toFree->tid, toFree->next, s->next);
 	free(toFree);
-	printf("\t\t\t\tdone\n\n");
 	return res;
 }
