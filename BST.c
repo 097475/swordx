@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "BST.h"
 
-
 void addBST(BST **b, Trie *t) {
 	if(*b == NULL) {
 		*b = (BST*) malloc(sizeof(BST));
