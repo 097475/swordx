@@ -9,26 +9,48 @@
 #include <unistd.h>
 #include <glob.h>
 #include <pthread.h>
-#include "swordx.h"
 #include "ThreadIdStack.h"
+#include "trie.h"
+#include "stack.h"
+#include "BST.h"
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#define RECURSE_FLAG (1<<0) //00000001
+#define FOLLOW_FLAG (1<<1) //00000010
+#define ALPHA_FLAG (1<<2) //00000100
+#define SBO_FLAG (1<<3) //00001000
 
-static int cmpstringp ( const void* , const void* );
-int isInArray ( char** , long , char* );
-void writeHelp( char* );
-extern char *canonicalize_file_name(const char*);
-char* _getWord(FILE *pf); 
-void scan(char *path, Stack *files,unsigned char flags, Stack *explude);
-char *absPath(char *path);
+void exitWithError(char * );
+void getBlacklist(Trie * , Stack * );
+char* _getWord(FILE * ); 
+int _isalphanum(char * );
+char* getWord ( FILE * , int , Trie* , unsigned char );
+FILE* open_file ( char* );
+FILE* makeFile ( char * );
+void sortTrie ( Trie* , BST** );
+void sbo(Trie * , FILE * );
+Stack* expand(Stack * );
+Stack* arrayToStack(char ** , int , Stack * , unsigned char);
+char* absPath(char * );
+void scan(char * , Stack * , unsigned char, Stack * );
+void* threadFun(void * );
+void execute(Stack * , char ** , Trie * , unsigned char);
+int isInArray ( char ** , long , char * );
+int cmpstringp ( const void * , const void * );
+void writeHelp( char * );
 
-Trie* t;
-struct ThreadArgs {
+extern char *canonicalize_file_name(const char*);  //check 
+
+
+typedef struct threadArgs {
 	char* src;
 	int min;
 	Trie* ignoreTrie;
 	unsigned char flags;
-};
+}ThreadArgs;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+Trie* t;
+
 
 void exitWithError(char *error) {
 	perror(error);
@@ -38,22 +60,22 @@ void exitWithError(char *error) {
 void getBlacklist(Trie *t, Stack *ignore) {
 	char *str,*src;
 	FILE *pf;
-	while(!isStackEmpty(ignore))	{
+	while(!isStackEmpty(ignore))
+	{
 		src = pop(ignore);
 		pf = fopen(src,"r");
 		if(pf == NULL)
 			exitWithError("opening file");
 		while((str = _getWord(pf)) != NULL)
 			add(str,t); 
-	
 		fclose(pf);
-		}
+	}
 	free(ignore);
 }
 
 char* _getWord(FILE *pf) {
-	char c, buf[500]; // c is the character, buf is the word
-	int pos = 0; // index
+	char c, buf[500];
+	int pos = 0; 
 	while(!isalnum(c = getc(pf)) && c != EOF); // remove all not-alphabetic character before a string
 	if(c == EOF) return NULL;
 	else ungetc(c,pf); // put the last char back
@@ -226,30 +248,16 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
     free(folders);
 }
 
-void* threadFun(void* arg) {
-	
-	printf("\tgetting args\n\n");
-	
-	struct ThreadArgs* a = (struct ThreadArgs*)arg;
-	char* str;
-	
-	printf("\topening file %s\n\n",a->src);
-	
+void* threadFun(void* arg) {	
+	ThreadArgs* a = (ThreadArgs*)arg;
+	char* str;	
 	FILE *pfread = open_file(a->src);
 	while((str = getWord(pfread,a->min,a->ignoreTrie,a->flags)) != NULL) {
 		pthread_mutex_lock(&mutex);
-			add(str,t); // add the word to the trie (starting from the 1st level)
+			add(str,t); 
 		pthread_mutex_unlock(&mutex);
-	}
-	
+	}	
 	fclose(pfread);
-	
-	//~ printf("\tfreeing src\n\n");
-	
-	//~ free(a->src);
-	
-	printf("\tthread done\n\n");
-	
 	return NULL;
 }
 
@@ -271,37 +279,23 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	pthread_t tid;
 	pthread_t *ptid;
 	while(!isStackEmpty(s))	{
-			printf("popping src\n\n");
 		src = pop(s);
-			printf("allocing threadArgs\n\n");
-		struct ThreadArgs* a = malloc(sizeof(struct ThreadArgs*));
-			printf("inserting args into threadargs\n\n");
+		ThreadArgs *a = malloc(sizeof(ThreadArgs));  //changed here
 		a->src = src;
 		a->min = min;
 		a->ignoreTrie = ignoreTrie;
 		a->flags = flags;
-			printf("done\n\n");
-			printf("creating thread\n\n");
 		int err = pthread_create(&tid, NULL, &threadFun, a);
-			printf("done\n\n");
 		if (err != 0)
 			exitWithError("Can't create thread");
-		else {
-				printf("pushing the thread into the stack (tid = %lu)\n\n",tid);
+		else 
 			threadIdPush(ts,&tid);
-		}
 	}
-		printf("waiting for threads\n\n");
 	while(!isThreadIdStackEmpty(ts)) {
-			printf("\t\tgetting tid\n\n");
 		ptid = threadIdPop(ts);
-			printf("\t\twaiting %lu\n\n",*ptid);
 		pthread_join(*ptid,NULL);
-			printf("\t\t%lu done\n\n",*ptid);
 		free(ptid);
 	}
-		printf("bye bye bye bye\n");
-	//~ printall(t);
 	// --- END Threads Part ---
 	FILE *pfwrite = makeFile(output);
 
@@ -322,19 +316,19 @@ int main(int argc, char *argv[]) {
 
     struct option long_options[] = {
 		{	"help",				no_argument,		0,		0	},
-		{	"recursive",		no_argument,		0,		1	},
+		{	"recursive",			no_argument,		0,		1	},
 		{	"follow",			no_argument,		0,		2	},
 		{	"explude",			required_argument,	0,		3	},
 		{	"alpha",			no_argument,		0,		4	},
 		{	"min",				required_argument,	0,		5	},
 		{	"ignore",			required_argument,	0,		6	},
-		{	"sortbyoccurrency",	no_argument,		0,		7	},
+		{	"sortbyoccurrency",		no_argument,		0,		7	},
 		{	"sbo",				no_argument,		0,		7	},
 		{	"output",			required_argument,	0,		8	},
-		{	NULL,				0,					NULL,	0	}  //required
+		{	NULL,				0,			NULL,		0	}  //required
 	};
 
-	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:",long_options,NULL)) != -1) {
+	while ((opt = getopt_long_only(argc, argv, "hrfe:am:i:o:",long_options,NULL)) != -1) {
 		switch(opt) {
 			case 0:	case 'h':
 				writeHelp(argv[0]); break;
@@ -357,11 +351,11 @@ int main(int argc, char *argv[]) {
 				push(_ignore,str); break;
 			case 7:
 				flags |= SBO_FLAG; break;
-			case 8:
+			case 8: case 'o': //verify
 				output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
 				strcpy(output,optarg); break;
 			default:
-				printf("default case");break;
+				printf("Unknown option");break; //verify
 		}
 	}
 
@@ -405,12 +399,12 @@ void writeHelp(char *appname) {
 	printf("   [options]\n");
 	printf("      -h | --help : display this message\n");
 	printf("\n");
-	printf("      --output <filename> : write the result in a spacific file (<filename>)\n");
+	printf("      -o <filename> | --output <filename> : write the result in a spacific file (<filename>)\n");
 	printf("         by default the file is named \"sword.out\"\n");
 	printf("\n");
 	printf("      -r | --recursive : go through all the passed directories recursivly\n");
 	printf("      -f | --follow : follow links\n");
-	printf("      -e | --explude : exclude a file (if -r is enable)\n");
+	printf("      -e <file> | --explude <file> : exclude a file (if -r is enabled)\n");
 	printf("\n");
 	printf("      -a | --alpha : consider alphabetics letters only\n");
 	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
