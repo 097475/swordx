@@ -11,7 +11,7 @@ void addBST(BST **b, Trie *t) {
 	}
 	else
 		if(t->occurrencies < ((*b)->wordInfo)->occurrencies)
-			addBST(&(*b)->left,t);  //levare &
+			addBST(&(*b)->left,t);
 		else
 			addBST(&(*b)->right,t);
 }
