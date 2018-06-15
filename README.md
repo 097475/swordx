@@ -20,5 +20,4 @@ Stack.c
 scan()
 threadFun()
 execute()
-isInArray()
-cmpstringp()
+
