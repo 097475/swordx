@@ -34,8 +34,6 @@ char* absPath(char * );
 void scan(char * , Stack * , unsigned char, Stack * );
 void* threadFun(void * );
 void execute(Stack * , char ** , Trie * , unsigned char);
-int isInArray ( char ** , long , char * );
-static int cmpstringp ( const void * , const void * );
 void writeHelp( char * );
 extern char *canonicalize_file_name(const char*); 
 
@@ -379,14 +377,6 @@ int main(int argc, char *argv[]) {
 
 	execute(s,args,ignoreTrie,flags);
 	exit(EXIT_SUCCESS);
-}
-
-int isInArray(char *array[], long length, char *str) {
-	char **key = &str;
-	return bsearch(key, array, length, sizeof(array[0]), cmpstringp) != NULL;
-}
-static int cmpstringp(const void *p1, const void *p2) { // from "man qsort": the qsort method accepts void pointers only
-	return (strcmp(*(char **)p1, *(char **)p2));
 }
 
 void writeHelp(char *appname) {
