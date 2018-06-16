@@ -157,10 +157,8 @@ Stack* expand(Stack *toExpand)
 				else
 				{
 					if((filestats.st_mode & S_IFMT) == S_IFDIR)
-					{
 						scan(globbuf.gl_pathv[i],result,0,createStack());
-					}
-					else 
+					else if((filestats.st_mode & S_IFMT) == S_IFREG)
 						push(result,absPath(globbuf.gl_pathv[i]));	
 				}
 
