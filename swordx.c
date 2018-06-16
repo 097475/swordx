@@ -34,6 +34,8 @@ char* absPath(char * );
 void scan(char * , Stack * , unsigned char, Stack * );
 void* threadFun(void * );
 void execute(Stack * , char ** , Trie * , unsigned char);
+int isInArray ( char ** , long , char * );
+static int cmpstringp ( const void * , const void * );
 void writeHelp( char * );
 extern char *canonicalize_file_name(const char*); 
 
@@ -140,15 +142,28 @@ void sbo(Trie *t, FILE *pf) {
 Stack* expand(Stack *toExpand)
 {
 	char* tmp;
+	struct stat filestats;
 	Stack *result = createStack();
 	glob_t globbuf;
 	while(!isStackEmpty(toExpand))	{
 		tmp = pop(toExpand);
 		if(glob(tmp, 0,NULL, &globbuf)!= GLOB_NOMATCH)
 		{
+
 			for(int i = 0; i < globbuf.gl_pathc; i++)
-			{
-				push(result,absPath(globbuf.gl_pathv[i]));	
+			{	
+				if (lstat(globbuf.gl_pathv[i], &filestats) == -1)
+					exitWithError("stat");
+				else
+				{
+					if((filestats.st_mode & S_IFMT) == S_IFDIR)
+					{
+						scan(globbuf.gl_pathv[i],result,0,createStack());
+					}
+					else 
+						push(result,absPath(globbuf.gl_pathv[i]));	
+				}
+
 			}
 		}
 
@@ -211,7 +226,6 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
 				strcpy(toInsert,path);
 				strcat(toInsert,"/");
 				strcat(toInsert,dp->d_name);
-				
 				if(searchStack(explude,toInsert)==0) {
 					if(dp->d_type == DT_DIR && ((flags & RECURSE_FLAG) == RECURSE_FLAG))
 						push(folders,toInsert);
@@ -236,8 +250,6 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
 								break;
 						}
 					}
-					else
-						printf("\tSkipped file(s) (add -r or -f to analyze them too!): \"%s\"\n", dp->d_name);
 				}
 			}
 	}
@@ -377,6 +389,14 @@ int main(int argc, char *argv[]) {
 
 	execute(s,args,ignoreTrie,flags);
 	exit(EXIT_SUCCESS);
+}
+
+int isInArray(char *array[], long length, char *str) {
+	char **key = &str;
+	return bsearch(key, array, length, sizeof(array[0]), cmpstringp) != NULL;
+}
+static int cmpstringp(const void *p1, const void *p2) { // from "man qsort": the qsort method accepts void pointers only
+	return (strcmp(*(char **)p1, *(char **)p2));
 }
 
 void writeHelp(char *appname) {
