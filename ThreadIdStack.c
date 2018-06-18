@@ -18,8 +18,7 @@ void threadIdPush(ThreadIdStack *s, pthread_t *intid) {
 	// create a new stack piece
 	ThreadIdStack *ns = (ThreadIdStack *)malloc(sizeof(ThreadIdStack));
 	// set the value
-	ns->tid = (pthread_t *)malloc(sizeof(pthread_t*));
-	*ns->tid = *intid;
+	ns->tid = intid;
 	// next is null
 	ns->next = s->next;
 	s->next = ns;
