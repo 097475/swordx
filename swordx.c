@@ -277,27 +277,26 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	
 	// --- Threads Part ---
 	char* src;
-	ThreadIdStack *ts = createThreadIdStack();
-
-	pthread_t tid;
-	pthread_t *ptid;
+	ThreadIdStack *ts = createThreadIdStack();	
+	pthread_t *tid;
 	while(!isStackEmpty(s))	{
 		src = pop(s);
+		tid = (pthread_t*)malloc(sizeof(pthread_t));
 		ThreadArgs *a = malloc(sizeof(ThreadArgs));  //changed here
 		a->src = src;
 		a->min = min;
 		a->ignoreTrie = ignoreTrie;
 		a->flags = flags;
-		int err = pthread_create(&tid, NULL, &threadFun, a);
+		int err = pthread_create(tid, NULL, &threadFun, a);
 		if (err != 0)
 			exitWithError("Can't create thread");
 		else 
-			threadIdPush(ts,&tid);
+			threadIdPush(ts,tid);
 	}
 	while(!isThreadIdStackEmpty(ts)) {
-		ptid = threadIdPop(ts);
-		pthread_join(*ptid,NULL);
-		free(ptid);
+		tid = threadIdPop(ts);
+		pthread_join(*tid,NULL);
+		free(tid);
 	}
 	// --- END Threads Part ---
 	FILE *pfwrite = makeFile(output);
