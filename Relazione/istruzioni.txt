@@ -1,0 +1,5 @@
+descrizione dei file e cosa contengono
+descrizione delle librerie utilizzate, cosa fanno e come installarle
+descrivere funzioni e strutture dati + come vengono implementate le funzionalità
+(aspetti più importanti, particolari implementazioni, problemi riscontrati)
+produrre documenti che dimostrino come si è testato il programma (benchmark ???)
