@@ -282,7 +282,7 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	while(!isStackEmpty(s))	{
 		src = pop(s);
 		tid = (pthread_t*)malloc(sizeof(pthread_t));
-		ThreadArgs *a = malloc(sizeof(ThreadArgs));  //changed here
+		ThreadArgs *a = malloc(sizeof(ThreadArgs));
 		a->src = src;
 		a->min = min;
 		a->ignoreTrie = ignoreTrie;
