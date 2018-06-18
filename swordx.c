@@ -387,14 +387,6 @@ int main(int argc, char *argv[]) {
 	exit(EXIT_SUCCESS);
 }
 
-int isInArray(char *array[], long length, char *str) {
-	char **key = &str;
-	return bsearch(key, array, length, sizeof(array[0]), cmpstringp) != NULL;
-}
-static int cmpstringp(const void *p1, const void *p2) { // from "man qsort": the qsort method accepts void pointers only
-	return (strcmp(*(char **)p1, *(char **)p2));
-}
-
 void writeHelp(char *appname) {
 	printf("%s [options] [inputs]\n", appname);
 	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) in a file or a range of files and print them into a new file.\n");
