@@ -32,8 +32,6 @@ char* absPath(char * );
 void scan(char * , Stack * , unsigned char, Stack * );
 void* threadFun(void * );
 void execute(Stack * , char ** , Trie * , unsigned char);
-int isInArray ( char ** , long , char * );
-static int cmpstringp ( const void * , const void * );
 void writeHelp( char * );
 extern char *canonicalize_file_name(const char*); 
 
