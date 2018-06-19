@@ -18,7 +18,7 @@ int getIndex(char c) {
 
 int _search(char *str, Trie *t, int level) { 
 		Trie *next = t->children[getIndex(str[level - 1])];
-		if(next!=NULL) //rimuovere strncmp
+		if(next!=NULL)
 			if(level == strlen(str)) 
 				return 1;
 			else { 
@@ -61,7 +61,7 @@ void _add (char* str, Trie *t, int level) {
 	Trie *next = t->children[getIndex(str[level - 1])]; // next is the next char of str (the root in a trie is empty)
 	
 	// if the childern is initialized and the next node has the same value of the substring... 
-	if(next != NULL) {  //forse rimuovere strncmp
+	if(next != NULL) {
 		if(level == strlen(str)) // .. if it's the whole word, increase the next's occurrencies
 			next->occurrencies++;
 		else { // .. else check the next level
