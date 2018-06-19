@@ -396,9 +396,9 @@ void writeHelp(char *appname) {
 	printf("      -o <filename> | --output <filename> : write the result in a spacific file (<filename>)\n");
 	printf("         by default the file is named \"sword.out\"\n");
 	printf("\n");
-	printf("      -r | --recursive : go through all the passed directories recursivly\n");
+	printf("      -r | --recursive : go through all the passed directories recursively\n");
 	printf("      -f | --follow : follow links\n");
-	printf("      -e <file> | --explude <file> : exclude a file (if -r is enabled)\n");
+	printf("      -e <file> | --explude <file> : exclude a file in a folder\n");
 	printf("\n");
 	printf("      -a | --alpha : consider alphabetics letters only\n");
 	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
