@@ -1,7 +1,7 @@
 #ifndef TRIE_H
 #define TRIE_H
 
-#define CHARSET 42
+#define CHARSET 36
 
 typedef struct Trie {
 	char *value;
