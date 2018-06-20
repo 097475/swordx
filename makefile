@@ -1,9 +1,11 @@
 # set compilator
 CC=gcc
-# object-making arguments
-CFLAGS=-Wall -Iinclude
 # obj dir
 OBJDIR=obj
+# headers dir
+HEADDIR=include
+# object-making arguments
+CFLAGS=-Wall -I$(HEADDIR)
 # objects needed
 OBJ=$(OBJDIR)/swordx.o \
 	$(OBJDIR)/BST.o \
@@ -12,17 +14,21 @@ OBJ=$(OBJDIR)/swordx.o \
 	$(OBJDIR)/trie.o
 # c,h folders
 vpath %.c src
-vpath %.h include
+vpath %.h $(HEADDIR)
 
 # all needs swordx
 all: swordx
 
 # swordx needs objects
 swordx: $(OBJ)
-	$(CC) $^ -pthread -Iinclude -o $@
+	$(CC) $^ $(CFLAGS) -pthread -o $@
 
 # objects are into OBJDIR and needs .c and .h
 $(OBJDIR)/%.o: %.c %.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+# BST needs trie.h
+$(OBJDIR)/BST.o: BST.c BST.h trie.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 # swordx needs .c and all .h files
