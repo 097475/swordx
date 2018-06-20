@@ -31,4 +31,3 @@ void printBST(BST *b) {
 		printBST(b->right);
 	}
 }
-//a
