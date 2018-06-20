@@ -18,9 +18,9 @@ void addBST(BST **b, Trie *t) {
 
 void writeTree(BST *b, FILE *pf) {
 	if(b != NULL) {
-		writeTree(b->left,pf);
-		writeNodeInformation(b->wordInfo,pf);
 		writeTree(b->right,pf);
+		writeNodeInformation(b->wordInfo,pf);
+		writeTree(b->left,pf);
 	}
 }
 
