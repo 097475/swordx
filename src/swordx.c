@@ -130,8 +130,7 @@ void sortTrie(Trie *t, BST **b) {
 }
 
 void sbo(Trie *t, FILE *pf) {
-	BST **b = (BST**)malloc(sizeof(BST*));
-	*b = NULL;
+	BST **b = createBST();
 	sortTrie(t,b);
 	writeTree(*b,pf);
 }
