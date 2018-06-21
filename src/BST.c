@@ -5,6 +5,10 @@
 BST** createBST()
 {
 	BST **b = (BST**)malloc(sizeof(BST*));
+	if(b == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	*b = NULL;
 	return b;
 }
@@ -12,6 +16,10 @@ BST** createBST()
 void addBST(BST **b, Trie *t) {
 	if(*b == NULL) {
 		*b = (BST*) malloc(sizeof(BST));
+		if(b == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 		(*b)->wordInfo	= t;
 		(*b)->left	= NULL;
 		(*b)->right	= NULL;

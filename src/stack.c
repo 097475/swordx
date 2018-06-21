@@ -6,6 +6,10 @@
 
 Stack* createStack() {
 	Stack *s = (Stack*)malloc(sizeof(Stack));
+	if(s == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	s->value = NULL;
 	s->next = NULL;
 	return s;
@@ -18,8 +22,16 @@ int isStackEmpty(Stack *s) {
 void push(Stack *s, char *str) {
 	// create a new stack piece
 	Stack *ns = (Stack *)malloc(sizeof(Stack));
+	if(ns == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	// set the value
 	ns->value = (char *)malloc((strlen(str) + 1)*sizeof(char));
+	if(ns->value == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	strcpy(ns->value, str);
 	// next is null
 	ns->next = s->next;

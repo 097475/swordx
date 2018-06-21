@@ -83,6 +83,7 @@ char* _getWord(FILE *pf) {
 		}
 	}
 	char *word = (char*)malloc((pos+1)*sizeof(char));
+	if(word == NULL) exitWithError("No more heap space");
 	strncpy(word,buf,pos);
 	word[pos]='\0';
 	return word;
@@ -217,6 +218,7 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
 		while( (dp = readdir(dirp)) != NULL)
 			if(strcmp(dp->d_name,"..") != 0 && strcmp(dp->d_name,".") != 0) {
 				char *toInsert = malloc((strlen(dp->d_name) + strlen(path))*sizeof(char) + 2);
+				if(toInsert == NULL) exitWithError("No more heap space");
 				strcpy(toInsert,path);
 				strcat(toInsert,"/");
 				strcat(toInsert,dp->d_name);
@@ -228,6 +230,7 @@ void scan(char *path, Stack *files, unsigned char flags, Stack *explude) {
 					else if(dp->d_type == DT_LNK && (flags & FOLLOW_FLAG) == FOLLOW_FLAG) {
 						toInsert = absPath(toInsert);
 						struct stat *sb = malloc(sizeof(struct stat));
+						if(sb == NULL) exitWithError("No more heap space");
 						if (lstat(toInsert, sb) == -1)
 							exitWithError("stat");
 						switch (sb->st_mode & S_IFMT) {
@@ -282,7 +285,9 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 	while(!isStackEmpty(s))	{
 		src = pop(s);
 		tid = (pthread_t*)malloc(sizeof(pthread_t));
+		if(tid == NULL) exitWithError("No more heap space");
 		ThreadArgs *a = malloc(sizeof(ThreadArgs));
+		if(a == NULL) exitWithError("No more heap space");
 		a->src = src;
 		a->min = min;
 		a->ignoreTrie = ignoreTrie;
@@ -310,6 +315,10 @@ void execute(Stack* s, char** args, Trie *ignoreTrie, unsigned char flags) {
 }
 
 int main(int argc, char *argv[]) {
+	if(argc == 1){
+		writeHelp(argv[0]);
+		exit(EXIT_SUCCESS);
+	}
 	int opt = 0, nparams = 0;
 	char *str = NULL,*output = NULL, *min = NULL, **args, **params;
 	Stack *_explude = createStack();
@@ -340,21 +349,25 @@ int main(int argc, char *argv[]) {
 				flags |= FOLLOW_FLAG; break;
 			case 3: case 'e':
 				str = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				if(str == NULL) exitWithError("No more heap space");
 				strcpy(str,optarg);
 				push(_explude,str);  ;break;
 			case 4: case 'a':
 				flags |= ALPHA_FLAG; break;
 			case 5: case 'm':
 				min = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				if(min == NULL) exitWithError("No more heap space");
 				strcpy(min,optarg); break;
 			case 6: case 'i':
 				str = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				if(str == NULL) exitWithError("No more heap space");
 				strcpy(str,optarg);
 				push(_ignore,str); break;
 			case 7:
 				flags |= SBO_FLAG; break;
 			case 8: case 'o': //verify
 				output = (char*)malloc((strlen(optarg)+1)*sizeof(char));
+				if(output == NULL) exitWithError("No more heap space");
 				strcpy(output,optarg); break;
 			default:
 				printf("Unknown option");break; //verify
@@ -362,14 +375,17 @@ int main(int argc, char *argv[]) {
 	}
 
 	args	= (char**)malloc(2 * sizeof(char*));
+	if(args == NULL) exitWithError("No more heap space");
 	args[0]	= min;		// min word lenght
 	args[1]	= output;	// output filename
 
 	nparams = argc-optind; // number of input files
 	params = (char**)malloc(nparams * sizeof(char*)); // list of filenames
+	if(params == NULL) exitWithError("No more heap space");
 
 	for(int i = optind; i<argc; i++) { // make params
 		params[i-optind] = (char*)malloc((strlen(argv[i])+1) * sizeof(char));
+		if(params[i-optind] == NULL) exitWithError("No more heap space");
 		strcpy(params[i-optind],argv[i]);
 	}
 	//create stack with params and nparams
@@ -386,24 +402,23 @@ int main(int argc, char *argv[]) {
 
 void writeHelp(char *appname) {
 	printf("%s [options] [inputs]\n", appname);
-	printf("   swordx counts the occurrencies of each words (alphanumeric characters by default) in a file or a range of files and print them into a new file.\n");
+	printf("\tswordx counts the occurrencies of each word (alphanumeric characters by default) in a file or a range of files and print them into a new file.\n");
 	printf("\n");
-	printf("   [inputs]\n");
-	printf("      the file and/or directory to process\n");
-	printf("   [options]\n");
-	printf("      -h | --help : display this message\n");
+	printf("\t[inputs]\n");
+	printf("\t\tfiles and/or directories to process\n");
+	printf("\t[options]\n");
+	printf("\t\t-h | --help : display this message\n");
 	printf("\n");
-	printf("      -o <filename> | --output <filename> : write the result in a spacific file (<filename>)\n");
-	printf("         by default the file is named \"sword.out\"\n");
+	printf("\t\t-o <filename> | --output <filename> : write the result in a specific output file (<filename>) (NOTE: if the file already exists, it will be overwrited!)\n");
+	printf("\t\t\tby default the file is named \"sword.out\"\n");
+	printf("\t\t-r | --recursive : go through all the passed directories recursively\n");
+	printf("\t\t-f | --follow : follow links\n");
+	printf("\t\t-e <file> | --explude <file> : exclude specific files in folders (regular expressions can be used using double quote)\n");
 	printf("\n");
-	printf("      -r | --recursive : go through all the passed directories recursively\n");
-	printf("      -f | --follow : follow links\n");
-	printf("      -e <file> | --explude <file> : exclude a file in a folder\n");
+	printf("\t\t-a | --alpha : consider alphabetic letters only\n");
+	printf("\t\t-m <num> | --min <num> : consider words with at least <num> letters\n");
+	printf("\t\t-i <file> | --ignore <file> : all words contained in <file> are ignored (provide one word per line) (regular expressions can be used using double quote)\n");
 	printf("\n");
-	printf("      -a | --alpha : consider alphabetics letters only\n");
-	printf("      -m <num> | --min <num> : consider words with at least <num> letters\n");
-	printf("      -i <file> | --ignore <file> : all words contained in <file> are ignored (one per line)\n");
-	printf("\n");
-	printf("      --sortbyoccurrency | -sbo : sort words by occurrencies in the output file\n");
+	printf("\t\t--sortbyoccurrency | -sbo : sort words by occurrencies (descending order) in the output file\n");
 }
 

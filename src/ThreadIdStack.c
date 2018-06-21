@@ -9,6 +9,10 @@ int isThreadIdStackEmpty(ThreadIdStack *s) {
 
 ThreadIdStack* createThreadIdStack() {
 	ThreadIdStack* ret = malloc(sizeof(ThreadIdStack*));
+	if(ret == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	ret->tid = NULL;
 	ret->next = NULL;
 	return ret;
@@ -17,6 +21,10 @@ ThreadIdStack* createThreadIdStack() {
 void threadIdPush(ThreadIdStack *s, pthread_t *intid) {
 	// create a new stack piece
 	ThreadIdStack *ns = (ThreadIdStack *)malloc(sizeof(ThreadIdStack));
+	if(ns == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	// set the value
 	ns->tid = intid;
 	// next is null

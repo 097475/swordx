@@ -35,8 +35,16 @@ int search(char *str, Trie *t) {
 
 void addRecord(char* str, Trie *t, int level) {
 	Trie *n = (Trie*)malloc(sizeof(Trie));
+	if(n == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 
 	n->value = (char*)malloc((level+1)*sizeof(char));
+	if(n->value == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	strncpy(n->value,str,level);
 	n->value[level] = '\0';	
 	
@@ -101,6 +109,10 @@ void printall(Trie *t) {
 
 Trie* createTree() {
 	Trie *t = (Trie*)malloc(sizeof(Trie));
+	if(t == NULL) {
+		perror("No more heap space");
+		exit(EXIT_FAILURE);
+	}
 	t->value = "";
 	t->occurrencies = 0;
 	for(int i = 0; i < CHARSET; i++)
