@@ -5,3 +5,4 @@ scan()
 threadFun()
 execute()
 
+#modificare sbo
