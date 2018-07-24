@@ -1,10 +1,14 @@
-#define CHARSET 42
+#ifndef TRIE_H
+#define TRIE_H
+
+#define CHARSET 36
 
 typedef struct Trie {
 	char *value;
 	long occurrencies;
 	struct Trie *children[CHARSET];
 } Trie;
+
 
 void add ( char* , Trie* );
 void printall ( Trie* );
@@ -13,12 +17,4 @@ int search(char*,Trie*);
 void writeTrie ( Trie* , FILE* );
 void writeNodeInformation ( Trie* , FILE* );
 
-typedef struct BST{
-	Trie *wordInfo;
-	struct BST *left;
-	struct BST *right;
-}BST;
-
-
-void addBST(BST **b, Trie *t);
-void printBST(BST *b);
+#endif
